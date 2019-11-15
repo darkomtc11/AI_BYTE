@@ -156,7 +156,11 @@
     )
 )
 
-(setq state (generateState 8))
+(write-line "")
+(write-line "Enter field size:")
+(setq n (read ))
+
+(setq state (generateState n))
 
 (defun getStack (row column)
     ;;(setq column (write-to-string column))
@@ -164,11 +168,13 @@
     (cadr (assoc column (cadr (assoc row state))))
 )
 
-(print (cadr (assoc 2 (cadr (assoc 'B (generateState 8))))))
+
+
+(print (cadr (assoc 2 (cadr (assoc 'B state)))))
 (write-line "")
 (write-line "")
 
-(printPretty state 8 T)
+(printPretty state n T)
 
 (write state)
 
