@@ -67,6 +67,6 @@ for (word, start) in ignoredWords:
 
 print("\n{}Starting the {} with clisp. \nOutput: {}".format(bcolors.OKBLUE, file_out, bcolors.OKGREEN))
 
-subprocess.run(["clisp", "-E UTF-8", file_out])
+subprocess.run(["clisp", file_out])
 
 print(bcolors.ENDC)
