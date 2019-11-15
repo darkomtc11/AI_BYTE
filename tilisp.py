@@ -43,8 +43,8 @@ else:
 with open(file_in, 'r') as file:
     string = file.read()
 
-validWords = [(m.group(), m.start(), m.end()) for m in re.finditer("[a-zA-z0-9+-/=<>^!@#$%^&]+\\(", string)]
-ignoredWords = [(m.group(), m.start()) for m in re.finditer("[a-zA-z0-9+-/=<>^!@#$%^&]+[ ]\\(", string)]
+validWords = [(m.group(), m.start(), m.end()) for m in re.finditer("[a-zA-z0-9+-/=<>^!@#$%^*&]+\\(", string)]
+ignoredWords = [(m.group(), m.start()) for m in re.finditer("[a-zA-z0-9+-/=<>^!@#$%^*&]+[ ]\\(", string)]
 newLines = [m.start() for m in re.finditer("\n", string)]
 result = []
 i = 0

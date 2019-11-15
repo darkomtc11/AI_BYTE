@@ -74,7 +74,7 @@ defun(printRow (row size curr)
             write-string("   ")
 
             loop(for i from 1 to size do
-                setq(stack assoc(i cadr(row)))
+                let(((stack assoc(i cadr(row))))
                 cond(
                     (null(stack)
                         write-string("    ")
@@ -83,7 +83,7 @@ defun(printRow (row size curr)
                         printStack(stack "top")
                         write-string(" ")
                     )
-                )
+                ))
             )
             write-line("")
             printRow(row size "middle")
@@ -93,7 +93,7 @@ defun(printRow (row size curr)
             write-string("  ")
 
             loop(for i from 1 to size do
-                setq(stack assoc(i cadr(row)))
+                let(((stack assoc(i cadr(row))))
                 cond(
                     (null(stack)
                         write-string("    ")
@@ -102,7 +102,7 @@ defun(printRow (row size curr)
                         printStack(stack "middle")
                         write-string(" ")
                     )
-                )
+                ))
             )
             write-line("")
             printRow(row size "bottom")
@@ -163,8 +163,6 @@ setq(n read())
 setq(state generateState(n))
 
 defun(getStack (row column)
-    ;;setq(column write-to-string(column))
-
     cadr(assoc(column cadr(assoc(row state))))
 )
 
