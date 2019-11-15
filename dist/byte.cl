@@ -156,9 +156,26 @@
     )
 )
 
+(setq state (generateState 8))
+
+(defun getStack (row column)
+    ;;(setq column (write-to-string column))
+
+    (cadr (assoc column (cadr (assoc row state))))
+)
+
 (print (cadr (assoc 2 (cadr (assoc 'B (generateState 8))))))
 (write-line "")
 (write-line "")
-(printPretty (generateState 10) 10 T)
 
-;;(write (generateState 10))
+(printPretty state 8 T)
+
+(write state)
+
+(write-line "")
+(write-line "Enter row:")
+(setq row (read ))
+(write-line "Enter column:")
+(setq column (read ))
+
+(write (getStack row column))
