@@ -2,40 +2,44 @@
 (defvar *allowed1* '(1 3 5 7 9))
 (defvar *allowed2* '(2 4 6 8 10))
 
-(defun generateState (size)
-    (generateField size size)
+(defun generateState ()
+    (generateField *n*)
 )
 
-(defun generateField (size current)
+(defun generateField (current)
     (cond 
         ((= current 0) ())
         (T
-            (cons (generateRow current size) (generateField size (- current 1)))
+            (cons (generateRow current) (generateField (- current 1)))
         )
     )
 )
 
-(defun generateRow (type size)
-    (cond 
-        ((or (= type 1) (= type size))
-            (cons (nth (- size type) *letters*) (list (generateStacks type (/ size 2) (/ size 2) ())))
-        )
-        ((= (mod type 2) 0)
-            (cons (nth (- size type) *letters*) (list (generateStacks type (/ size 2) (/ size 2) '(O))))
-        )
-        (T
-            (cons (nth (- size type) *letters*) (list (generateStacks type (/ size 2) (/ size 2) '(X))))
+(defun generateRow (type)
+    (let ((index (- *n* type)) (size (/ *n* 2)))
+        (cond 
+            ((or (= type 1) (= type *n*))
+                (cons (nth index *letters*) (list (generateStacks type size ())))
+            )
+            ((= (mod type 2) 0)
+                (cons (nth index *letters*) (list (generateStacks type size '(O))))
+            )
+            (T
+                (cons (nth index *letters*) (list (generateStacks type size '(X))))
+            )
         )
     )
 )
 
-(defun generateStacks (type size curr data)
-    (cond 
-        ((= curr 0) ())
-        ((= (mod type 2) 0)
-            (cons (cons (nth (- size curr) *allowed1*) (list data)) (generateStacks type size (- curr 1) data))
+(defun generateStacks (type curr data)
+    (let ((index (- (/ *n* 2) curr)) (next (- curr 1)))
+        (cond 
+            ((= curr 0) ())
+            ((= (mod type 2) 0)
+                (cons (cons (nth index *allowed1*) (list data)) (generateStacks type next data))
+            )
+            (T (cons (cons (nth index *allowed2*) (list data)) (generateStacks type next data)))
         )
-        (T (cons (cons (nth (- size curr) *allowed2*) (list data)) (generateStacks type size (- curr 1) data)))
     )
 )
 
@@ -105,65 +109,6 @@
     )
 )
 
-;; (defun printRow (row size curr)
-;;     "Prints row in three parts"    
-;;     (cond 
-;;         ((equal curr "top")
-;;             (write-string "   ")
-
-;;             (loop for i from 1 to size do
-;;                 (let ((square (assoc i (cadr row))))
-;;                 (cond 
-;;                     ((null square)
-;;                         (write-string "    ")
-;;                     )
-;;                     (T
-;;                         (printSquare square "top")
-;;                         (write-string " ")
-;;                     )
-;;                 ))
-;;             )
-;;             (write-line "")
-;;             (printRow row size "middle")
-;;         )
-;;         ((equal curr "middle")
-;;             (write (car row))
-;;             (write-string "  ")
-
-;;             (loop for i from 1 to size do
-;;                 (let ((square (assoc i (cadr row))))
-;;                 (cond 
-;;                     ((null square)
-;;                         (write-string "    ")
-;;                     )
-;;                     (T
-;;                         (printSquare square "middle")
-;;                         (write-string " ")
-;;                     )
-;;                 ))
-;;             )
-;;             (write-line "")
-;;             (printRow row size "bottom")
-;;         )
-;;         ((equal curr "bottom")
-;;             (write-string "   ")
-
-;;             (loop for i from 1 to size do
-;;                 (let ((square (assoc i (cadr row))))
-;;                 (cond 
-;;                     ((null square)
-;;                         (write-string "    ")
-;;                     )
-;;                     (T
-;;                         (printSquare square "bottom")
-;;                         (write-string " ")
-;;                     )
-;;                 ))
-;;             )
-;;         )
-;;     )
-;; )
-
 (defun printSquare (square part)
     "Prints one third of stacked checkers on given square."
     (cond 
@@ -222,8 +167,7 @@
 (write-line "Enter field size:")
 
 (defvar *n* (read ))
-(defvar *state* (generateState *n*))
-
+(defvar *state* (generateState ))
 
 (write-string "1: print board, 2: write state, 3: play a move, -1: exit")
 (write-line "")
