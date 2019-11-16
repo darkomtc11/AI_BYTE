@@ -105,65 +105,6 @@ defun(printRow (row type curr)
     )
 )
 
-;; defun(printRow (row size curr)
-;;     "Prints row in three parts"    
-;;     cond(
-;;         (equal(curr "top")
-;;             write-string("   ")
-
-;;             loop(for i from 1 to size do
-;;                 let(((square assoc(i cadr(row))))
-;;                 cond(
-;;                     (null(square)
-;;                         write-string("    ")
-;;                     )
-;;                     (T
-;;                         printSquare(square "top")
-;;                         write-string(" ")
-;;                     )
-;;                 ))
-;;             )
-;;             write-line("")
-;;             printRow(row size "middle")
-;;         )
-;;         (equal(curr "middle")
-;;             write(car(row))
-;;             write-string("  ")
-
-;;             loop(for i from 1 to size do
-;;                 let(((square assoc(i cadr(row))))
-;;                 cond(
-;;                     (null(square)
-;;                         write-string("    ")
-;;                     )
-;;                     (T
-;;                         printSquare(square "middle")
-;;                         write-string(" ")
-;;                     )
-;;                 ))
-;;             )
-;;             write-line("")
-;;             printRow(row size "bottom")
-;;         )
-;;         (equal(curr "bottom")
-;;             write-string("   ")
-
-;;             loop(for i from 1 to size do
-;;                 let(((square assoc(i cadr(row))))
-;;                 cond(
-;;                     (null(square)
-;;                         write-string("    ")
-;;                     )
-;;                     (T
-;;                         printSquare(square "bottom")
-;;                         write-string(" ")
-;;                     )
-;;                 ))
-;;             )
-;;         )
-;;     )
-;; )
-
 defun(printSquare (square part)
     "Prints one third of stacked checkers on given square."
     cond(
