@@ -21,23 +21,23 @@
     ;; (print node)
         (cond 
             ((null node) ())
-            ((find node processed) ())
             (T
-                (let* (
-                    (new (cadr (assoc node graph))) 
-                    (children (append (mapcar #'cons new (getDepths depth (length new))) siblings)))
-                        (cond 
-                            ((null children) (list (cons node (list depth))))
-                            (T
-                                (cons (cons node (list depth)) (formirajPoDubini graph (caar children) (+ (car (cdar children)) 1) (cons node processed) (cdr children)))
-                            )   
-                        )
+                (let* ((new (cadr (assoc node graph))) (reducednew (set-difference new processed)) (children (append (mapcar #'cons reducednew (getDepths depth (length new))) siblings)))
+                    (print reducednew)
+                    (cond 
+                        ((null children) (list (cons node (list depth))))
+                        ((find node processed) ())
+
+                        (T
+                            (cons (cons node (list depth)) (formirajPoDubini graph (caar children) (+ (car (cdar children)) 1) (cons node processed) (cdr children)))
+                        )   
+                    )
                 )
             )
         )
     )
 (setq graf1 '((a (b c)) (b (e)) (c (f d b)) (d (g)) (e ()) (f (c)) (g ()))) 
-
+(trace formirajPoDubini)
 (print (formirajPoDubini graf1 'a 0 '() '()))
 
 
