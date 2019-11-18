@@ -17,7 +17,7 @@
 
     ;; (print graph)
     
-     (print children)
+    ;; (print children)
     ;; (print node)
         (cond 
             ((null node) ())
@@ -25,14 +25,14 @@
             (T
                 (let* (
                     (new (cadr (assoc node graph))) 
-                    (children (append (mapcar #'cons new (getDepths depth (length new))) siblings))
+                    (children (append (mapcar #'cons new (getDepths depth (length new))) siblings)))
                         (cond 
                             ((null children) (list (cons node (list depth))))
                             (T
                                 (cons (cons node (list depth)) (formirajPoDubini graph (caar children) (+ (car (cdar children)) 1) (cons node processed) (cdr children)))
                             )   
                         )
-                ))
+                )
             )
         )
     )
