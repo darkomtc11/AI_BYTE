@@ -49,10 +49,10 @@
 (defun writeNumbers (n)
     "Prints column numbers."
     (cond 
-        ((= n 0) (write-string ""))
+        ((= n 0) (write-string " "))
         (T 
             (writeNumbers (- n 1))
-            (write-string (format nil "~4D" n))
+            (write-string (format nil "~4D   " n))
         )
     )
 )
@@ -99,7 +99,7 @@
             (let ((square (assoc (+ (- *n* curr) 1) (cadr row))))
                 (cond 
                     ((null square)
-                        (write-string "    ")
+                        (write-string "       ")
                     )
                     (T
                         (write-string " ")
@@ -137,8 +137,8 @@
 (defun printChecker (checker)
     "Prints single checker if it exists."
     (cond 
-        ((null checker) (write-string "-"))
-        (T (write checker))
+        ((null checker) (write-string "- "))
+        (T (write checker) (write-string " "))
     )
 )
 
