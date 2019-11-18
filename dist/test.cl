@@ -1,26 +1,44 @@
-(defun getStack (row column)
-    (setq key (concatenate 'string row (write-to-string column)))
-    (cadr (assoc key flowers :test #'equalp))
-)
-
-(defun setassoc (sym val L)
-  "Associates the value with the symbol in the list L."
-  (setcdr (assoc sym L) val)
-)
-
-(setq key (concatenate 'string "a" (write-to-string 1)))
-
-(setq flowers '((key (W B B W)) ((b 2) (W B B W)) ((A 3) ())))
-(setq row "a")
-(setq column 1)
-
-(setcdr flowers '(cat dog))
-
-(print (getStack row column))
-(print flowers)
-
-;; (defun printConc (row column)
-;;    (print (concatenate 'string row (write-to-string column)))
+;; (defun getStack (row column)
+;;     (setq key (concatenate 'string row (write-to-string column)))
+;;     (cadr (assoc key flowers :test #'equalp))
 ;; )
 
-;; (printConc row column)
+;; ('((a (b)) (b (c)) (c (a b))) a dubina) => '((b 2) (c 2))
+
+
+(defun getDepths (depth n)
+    (cond ((= n 0)())
+    (T (cons (list depth) (getDepths depth (- n 1))))
+    )
+    
+)
+
+(defun formirajPoDubini (graph node depth processed siblings)
+
+    ;; (print graph)
+    
+     (print children)
+    ;; (print node)
+        (cond 
+            ((null node) ())
+            ((find node processed) ())
+            (T
+                (let* (
+                    (new (cadr (assoc node graph))) 
+                    (children (append (mapcar #'cons new (getDepths depth (length new))) siblings))
+                        (cond 
+                            ((null children) (list (cons node (list depth))))
+                            (T
+                                (cons (cons node (list depth)) (formirajPoDubini graph (caar children) (+ (car (cdar children)) 1) (cons node processed) (cdr children)))
+                            )   
+                        )
+                ))
+            )
+        )
+    )
+(setq graf1 '((a (b c)) (b (e)) (c (f d b)) (d (g)) (e ()) (f (c)) (g ()))) 
+
+(print (formirajPoDubini graf1 'a 0 '() '()))
+
+
+;; (list (cons node (list depth)))

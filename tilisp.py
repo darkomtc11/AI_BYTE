@@ -55,6 +55,8 @@ for (word, start, end) in validWords:
     string = string[:start+i] + word + ' ' + string[end+i:]
     i += 1
 
+string = string.replace("// ", ";; ")
+
 with open(file_out, 'w') as file:
     file.write(string)
 
