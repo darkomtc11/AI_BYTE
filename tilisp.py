@@ -27,12 +27,26 @@ string = ""
 
 file_in = 'input.il'
 file_out = 'output.cl'
+print_ignored = False
 
 if(len(sys.argv) >= 2):
-    file_in = sys.argv[1]
+    if(sys.argv[1].startswith("-")):
+        if(sys.argv[1] == "-i"):
+            print_ignored = True
+    else:
+        file_in = sys.argv[1]
 
 if(len(sys.argv) >= 3):
-    file_out = sys.argv[2]
+    if(sys.argv[2].startswith("-")):
+        if(sys.argv[2] == "-i"):
+            print_ignored = True
+    else:
+        file_out = sys.argv[2]
+
+if(len(sys.argv) >= 4):
+    if(sys.argv[3].startswith("-")):
+        if(sys.argv[3] == "-i"):
+            print_ignored = True
 
 if(os.path.isfile(file_in)):
     print('\nTranspiling {}\"{}\"{} to {}\"{}\"{}\n'.format(bcolors.HEADER, file_in,bcolors.ENDC, bcolors.HEADER, file_out, bcolors.ENDC))
@@ -62,10 +76,11 @@ with open(file_out, 'w') as file:
 
 #print('\n\n'+string)
 
-print("{}Ignored words:{}".format(bcolors.WARNING, bcolors.OKGREEN))
-for (word, start) in ignoredWords:
-    indexes = lineAndColumn(start)
-    print("line: {: <6} column: {: <3} word: \"{}\"".format(indexes[0], indexes[1], word))
+if(print_ignored):
+    print("{}Ignored words:{}".format(bcolors.WARNING, bcolors.OKGREEN))
+    for (word, start) in ignoredWords:
+        indexes = lineAndColumn(start)
+        print("line: {: <6} column: {: <3} word: \"{}\"".format(indexes[0], indexes[1], word))
 
 print("\n{}Starting the {} with clisp. \nOutput: {}".format(bcolors.OKBLUE, file_out, bcolors.OKGREEN))
 
