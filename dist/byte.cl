@@ -210,6 +210,22 @@
     )
 )
 
+(defun generateNode (parent)
+    (cons parent (cons 'HV (list (list (+ parent 1) (- parent 1)))))
+)
+
+(defun generateChildren (list)
+    (cond 
+        ((null list) ())
+        ((atom (car list)) (cons (generateNode (car list)) (generateChildren (cdr list))))
+        (T
+            (cons (append (subseq (car list) 0 2) (list (generateChildren (nth 2 (car list))))) (list (generateChildren (cdr list))))
+        )
+    )
+)
+
+(trace generateChildren)
+
 (write-line "")
 (write-line "Enter field size:")
 
@@ -235,13 +251,20 @@
             (setq *state* (playMove *state*))
         )
         ((= action 4)
-            (setf test '(1 2 3))
-            (print test)
+            (setq node (generateNode 10))
+            (write-string "aaaa")
+            (print node)
+            (setq toPrint (generateChildren (list node)))
+            (print toPrint)
+            (print (generateChildren (nth 2 toPrint)))
         )
         (T (write-line "Please choose correct action."))
+
+        
     )
     (write-line "")
     (write-line "Choose another action:")
     (write-line "")
     (setq action (read ))
 )
+
