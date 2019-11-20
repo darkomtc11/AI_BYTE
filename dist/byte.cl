@@ -159,7 +159,7 @@
 
 (defun moveStack (sRow sColumn dRow dColumn level state)
     "Moves one stack to another or to an empty place. Takes top of stack by level."
-    (let ((newState (deep-copy state)))
+    (let ((newState (copy-tree state)))
         (cond 
             ((and (checkSquare sRow sColumn newState) (checkSquare dRow dColumn newState))
                 (let* ((src (getSquareStack sRow sColumn newState)) (dest (getSquareStack dRow dColumn newState)) (list (splitStack dest src level)) (sDest (car list)) (sSrc (cadr list)))
@@ -201,17 +201,8 @@
     )
 )
 
-(defun deep-copy (list)
-    (cond 
-        ((and (listp list) (not (null list)))
-            (cons (deep-copy (car list)) (deep-copy (cdr list)))
-        )
-        (T list)
-    )
-)
-
 (defun generateNode (parent)
-    (cons parent (cons 'HV (list (list (+ parent 1) (- parent 1)))))
+    (cons parent (cons 'HV (list (list (+ parent 2) (+ parent 1) (- parent 1) (- parent 2)))))
 )
 
 (defun generateChildren (list)
@@ -219,12 +210,23 @@
         ((null list) ())
         ((atom (car list)) (cons (generateNode (car list)) (generateChildren (cdr list))))
         (T
-            (cons (append (subseq (car list) 0 2) (list (generateChildren (nth 2 (car list))))) (list (generateChildren (cdr list))))
+            (let ((prvi-deo (subseq (car list) 0 2)) (children (list (generateChildren (nth 2 (car list))))) (ostali (generateChildren (cdr list))))
+                (cond 
+                    ((null ostali)
+                        (append prvi-deo children)
+                    )
+                    (T
+                        (cons (append prvi-deo children) (list ostali))
+                    )
+                )
+            )
         )
     )
 )
+;; (list (generateChildren (cdr list)))
 
-(trace generateChildren)
+;; (trace generateChildren)
+;; (trace generateNode)
 
 (write-line "")
 (write-line "Enter field size:")
@@ -252,11 +254,10 @@
         )
         ((= action 4)
             (setq node (generateNode 10))
-            (write-string "aaaa")
             (print node)
             (setq toPrint (generateChildren (list node)))
             (print toPrint)
-            (print (generateChildren (nth 2 toPrint)))
+            (print (generateChildren (generateChildren (nth 2 toPrint))))
         )
         (T (write-line "Please choose correct action."))
 
