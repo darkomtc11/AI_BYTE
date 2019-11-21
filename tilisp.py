@@ -84,6 +84,6 @@ if(print_ignored):
 
 print("\n{}Starting the {} with clisp. \nOutput: {}".format(bcolors.OKBLUE, file_out, bcolors.OKGREEN))
 
-subprocess.run(["clisp", file_out])
+subprocess.run(["clisp","-m", "5000MB", "-E", "UTF-8", file_out])
 
 print(bcolors.ENDC)
