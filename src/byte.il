@@ -45,7 +45,7 @@ defun(generateStacks (type curr data n)
     let(((index -(/(n 2) curr)) (next -(curr 1)))
         cond(
             (=(curr 0) ())
-            (=(mod(type 2) 0)
+            (=(mod(type 2) 0) // gore levo - 0: CRNO, 1: BELO
                 cons(cons(nth(index *allowed1*) list(data)) generateStacks(type next data n))
             )
             (T cons(cons(nth(index *allowed2*) list(data)) generateStacks(type next data n)))

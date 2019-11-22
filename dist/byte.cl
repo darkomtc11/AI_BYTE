@@ -45,7 +45,7 @@
     (let ((index (- (/ n 2) curr)) (next (- curr 1)))
         (cond 
             ((= curr 0) ())
-            ((= (mod type 2) 0)
+            ((= (mod type 2) 1)
                 (cons (cons (nth index *allowed1*) (list data)) (generateStacks type next data n))
             )
             (T (cons (cons (nth index *allowed2*) (list data)) (generateStacks type next data n)))
@@ -355,8 +355,8 @@
     )
 )
 
-(defun check-valid (src dest level state)
-
+(defun checkValid (src dest level state)
+    
 )
 
 (defun toggle (checker)
