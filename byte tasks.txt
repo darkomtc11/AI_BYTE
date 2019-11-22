@@ -1,0 +1,8 @@
+[x] Definisati način za predstavljanje stanja problema (igre)
+[x] Napisati funkciju za postavljanje početnog stanja na osnovu zadate veličine table
+[x] Napisati funkcije za testiranje ciljnog stanja (pobede)
+[x] Omogućiti izbor ko će igrati prvi (čovek ili računar). Prvi igra uvek igrač X, a drugi igrač O
+[x] Implementirati funkcije koje obezbeđuju prikaz proizvoljnog stanja problema (igre)
+[+] Realizovati funkcije koje na osnovu zadatog poteza igrača, u obliku (vrsta kolona), omogućavaju:
+	[ ] proveru da li je potez valjan
+	[x] ako jeste, promenu prosleđenog stanja problema (igre) odigravanjem poteza
