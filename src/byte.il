@@ -1,49 +1,54 @@
-defvar(*letters* '(A B C D E F G H I J K L M N O P Q R S T U))
-defvar(*allowed1* '(1 3 5 7 9 11 13 15 17 19))
-defvar(*allowed2* '(2 4 6 8 10 12 14 16 18 20))
+defconstant(*numberByLetter* '((A 1) (B 2) (C 3) (D 4) (E 5) (F 6) (G 7) (H 8) (I 9) (J 10) (K 11) (L 12) (M 13) (N 14) (O 15) (P 16) (Q 17) (R 18) (S 19) (T 20)))
+defconstant(*letterByNumber* '((1 A) (2 B) (3 C) (4 D) (5 E) (6 F) (7 G) (8 H) (9 I) (10 J) (11 K) (12 L) (13 M) (14 N) (15 O) (16 P) (17 Q) (18 R) (19 S) (20 T)))
+defconstant(*allowed1* '(1 3 5 7 9 11 13 15 17 19))
+defconstant(*allowed2* '(2 4 6 8 10 12 14 16 18 20))
 
 defstruct(node state (value 'HV) (children '()))
+defstruct(environment state (stackWinners '()))
 
-defun(generatePlayingField (current)
+defvar(DEV-nodeCount 1)
+
+defun(generatePlayingField (current n)
     "Generates whole playing field by generating rows."
     cond(
         (=(current 0) ())
         (T
-            cons(generateRow(current) generatePlayingField(-(current 1)))
+            cons(generateRow(current n) generatePlayingField(-(current 1) n))
         )
     )
 )
 
-defun(generateRow (rowIndex)
+defun(generateRow (rowIndex n)
     "Initiates full row stack generation."
-    let(((index -(*n* rowIndex)) (size /(*n* 2)) (type mod(rowIndex 2)))
-        cons(nth(index *letters*) 
+    let(((index +(-(n rowIndex) 1)) (size /(n 2)) (type mod(rowIndex 2)))
+        cons(
+            index
             list(generateStacks(type size
                 cond(
-                    (or(=(rowIndex 1) =(rowIndex *n*))
+                    (or(=(rowIndex 1) =(rowIndex n))
                         ()
                     )
                     (=(type 0)
-                        '(X)
+                        '(X X X X)
                     )
                     (T
-                        '(O)
+                        '(O O O O)
                     )
-                )
+                ) n
             ))
         )
     )
 )
 
-defun(generateStacks (type curr data)
+defun(generateStacks (type curr data n)
     "Generates all stacks of one row based on type (odd/even) and puts given data on stack."
-    let(((index -(/(*n* 2) curr)) (next -(curr 1)))
+    let(((index -(/(n 2) curr)) (next -(curr 1)))
         cond(
             (=(curr 0) ())
             (=(mod(type 2) 0)
-                cons(cons(nth(index *allowed1*) list(data)) generateStacks(type next data))
+                cons(cons(nth(index *allowed1*) list(data)) generateStacks(type next data n))
             )
-            (T cons(cons(nth(index *allowed2*) list(data)) generateStacks(type next data)))
+            (T cons(cons(nth(index *allowed2*) list(data)) generateStacks(type next data n)))
         )
     )
 )
@@ -59,24 +64,24 @@ defun(writeNumbers (n)
     )
 )
 
-defun(printBoard (field first)
+defun(printBoard (field first n)
     "Initiaces full board printing"
     cond(
         (=(length(field) 0) ())
         (first 
             writeNumbers(length(field))
             write-line("")
-            printBoard(field ())
+            printBoard(field () n)
         )
         (T 
-            printRow(car(field) 1 *n*)
+            printRow(car(field) 1 n n)
             write-line("")
-            printBoard(cdr(field) ())
+            printBoard(cdr(field) () n)
         )
     )
 )
 
-defun(printRow (row type curr)
+defun(printRow (row type curr n)
     "Prints row in three parts. Calls it self 2 times with different type."
     cond(
         (=(curr -1)
@@ -85,20 +90,20 @@ defun(printRow (row type curr)
                 (=(type 3) ())
                 (T
                     write-line("")
-                    printRow(row +(type 1) *n*)
+                    printRow(row +(type 1) n n)
                 )
             )
         )
         (T
-            if(and(=(type 2) =(curr *n*)) 
-                write(car(row))
+            if(and(=(type 2) =(curr n)) 
+                write(cadr(assoc(car(row) *letterByNumber*)))
 
-                if(=(curr *n*) 
+                if(=(curr n) 
                     write-string(" ")
                 )
             )
            
-            let(((square assoc(+(-(*n* curr) 1) cadr(row))))
+            let(((square assoc(+(-(n curr) 1) cadr(row))))
                 cond(
                     (null(square)
                         write-string("       ")
@@ -110,7 +115,7 @@ defun(printRow (row type curr)
                 )
             )
             
-            printRow(row type -(curr 1))
+            printRow(row type -(curr 1) n)
         )
     )
 )
@@ -137,7 +142,7 @@ defun(printSquare (square part)
 )
 
 defun(printChecker (checker)
-    "Prints single checker if it exists."
+    "Prints checkers one by one."
     cond(
         (null(checker) write-string("- "))
         (T write(checker) write-string(" "))
@@ -159,21 +164,29 @@ defun(getSquare (row column state)
     assoc(column cadr(assoc(row state)))
 )
 
-defun(moveStack (sRow sColumn dRow dColumn level state)
+defun(moveStack (sRow sColumn dRow dColumn level env)
     "Moves one stack to another or to an empty place. Takes top of stack by level."
-    let(((newState copy-tree(state)))
+    let*(((newEnv copy-environment(env)) (newState environment-state(newEnv)))
         cond(
             (and(checkSquare(sRow sColumn newState) checkSquare(dRow dColumn newState))
                 let*(((src getSquareStack(sRow sColumn newState)) (dest getSquareStack(dRow dColumn newState)) (list splitStack(dest src level)) (sDest car(list)) (sSrc cadr(list)))
                     // print(sSrc)
                     // print(sDest)
                     setf(cadr(getSquare(sRow sColumn newState)) sSrc)
-                    setf(cadr(getSquare(dRow dColumn newState)) sDest)
+                    cond(
+                        (=(length(sDest) 8)
+                            setf(cadr(getSquare(dRow dColumn newState)) '())
+                            setf(environment-stackWinners(newEnv) last(sDest))
+                        )
+                        (T
+                            setf(cadr(getSquare(dRow dColumn newState)) sDest)
+                        )
+                    )
                 )
             )
             // (T write-string("Invalid move"))
         )
-        newState
+        newEnv
     )
 )
 
@@ -186,11 +199,11 @@ defun(playMove (state)
     "Allows player to choose a valid move to play and returns a new game state."
     write-line("")
     write-line("Enter source row (A B C ...):")
-    let(((sRow read()))
+    let(((sRow cadr(assoc(read() *numberByLetter*))))
         write-line("Enter source column (1 2 3...):")
         let(((sColumn read()))
             write-line("Enter destination row (A B C ...):")
-            let(((dRow read()))
+            let(((dRow cadr(assoc(read() *numberByLetter*))))
                 write-line("Enter destination column (1 2 3...):")
                 let(((dColumn read()))
                     write-line("Enter source level:")
@@ -271,7 +284,7 @@ defun(generatePossibleOutcomes (state player)
                 // za field size 2, depth 4
 
             )))
-                setq(*numOfNodes* +(*numOfNodes* length(outcomes)))
+                setq(DEV-nodeCount +(DEV-nodeCount length(outcomes)))
                 outcomes
             )
             
@@ -335,66 +348,74 @@ defun(printPretty (node indent last)
     )   
 )
 
+defun(printStackWinners (stackWinners)
+    if(not(null(stackWinners)) write(stackWinners))
+)
+
+defun(checkWinner (stackWinners)
+    cond(
+        (=(frequency('X stackWinners) 2) 'X)
+        (=(frequency('O stackWinners) 2) 'O)
+        (T ())
+    )
+)
+
+defun(frequency (el list)
+    cond(
+        (null(list) 0)
+        (equal(el car(list)) +(1 frequency(el cdr(list))))
+        (T frequency(el cdr(list)))
+    )
+)
+
 defun(main ()
 
     write-line("")
     write-line("Enter field size:")
-
-    setq(*numOfNodes* 1)
-    defvar(*n* read())
-    defvar(*state* generatePlayingField(*n*))
-    defvar(*player* 0)
-
-    write-string("1: print board, 2: write state, 3: play a move, -1: exit")
-    write-line("")
-    setq(action read())
-    loop(while not(<=(action -1)) do
-        cond(
-            (=(action 1)
-                write-line("")
-                printBoard(*state* T)
-            )
-            (=(action 2)
-                write-line("")
-                write(*state*)
-            )
-            (=(action 3)
-                printBoard(*state* T)
-                setq(*state* playMove(*state*))
-            )
-            (=(action 4)           
-                // setq(root make-node(:state *state* :value 'HV :children '()))
-                write-line("Depth:")
-                let(((num read()))
-                    time(
-                        // deepen(list(root) num)
-                        deepen(list(make-node(:state *state* :value 'HV :children '())) num)
-                    )
-                    print(*numOfNodes*)
-                    setq(*numOfNodes* 1)
-                    // printPretty(root "" '())
-                    // room()
-                )
-                
-            
-            )
-            (=(action 5)
-                // setq(outcomes generatePossibleOutcomes(*state* 0))
-                // print(outcomes)
-                // setq(nodes generateChildren(outcomes))
-                // print(nodes)
-                // printBoard(node-state(nth(0 nodes)) T)
-                // printBoard(node-state(nth(1 nodes)) T)
-                room()
-            )
-            (T write-line("Please choose correct action."))
-
-            
-        )
-        write-line("")
-        write-line("Choose another action:")
+    let*(((n read()) (env make-environment(:state generatePlayingField(n n))) (player 'X) )
+        write-string("1: print board, 2: write state, 3: play a move, -1: exit")
         write-line("")
         setq(action read())
+        loop(while not(<=(action -1)) do
+            cond(
+                (=(action 1)
+                    write-line("")
+                    printBoard(environment-state(env) T n)
+                    printStackWinners(environment-stackWinners(env))
+                )
+                (=(action 2)
+                    write-line("")
+                    write(environment-state(env))
+                )
+                (=(action 3)
+                    printBoard(environment-state(env)T n)
+
+                    setq(newEnv playMove(env))
+
+                    printBoard(environment-state(env)T n)
+                    printBoard(environment-state(newEnv)T n)
+
+                    checkWinner(environment-stackWinners(env))
+                )
+                (=(action 4)
+                    write-line("Depth:")
+                    let(((num read()))
+                        time(
+                            deepen(list(make-node(:state environment-state(env) :value 'HV :children '())) num)
+                        )
+                        print(DEV-nodeCount)
+                        setq(DEV-nodeCount 1)
+                        // printPretty(root "" '())
+                        // room()
+                    )
+                )
+                (T write-line("Please choose correct action."))
+            )
+            write-line("")
+            write-line("Choose another action:")
+            write-line("")
+            setq(action read())
+        )
     )
 )
 
