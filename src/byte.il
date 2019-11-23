@@ -518,7 +518,7 @@ defun(main ()
                                 )
                                 (T
                                     cond(
-                                        (AI write-string("AI PLAYS ASTONISHING MOVE!"))
+                                        (AI write-line("") write-string("AI PLAYS ASTONISHING MOVE!"))
                                         (T
                                             setq(env playMove(env))
                                             printBoard(environment-state(env) T n)

@@ -159,18 +159,20 @@
     (cadr (assoc column (cadr (assoc row state))))
 )
 
-(defun getRowStacks (rowIndex row)
+(defun getRowNonEmpty (rowIndex row)
+    "Retruns all non empty squares in one row. (row column)"
     (cond 
         ((null row) ())
-        ((not (null (cadar row))) (cons (list rowIndex (caar row)) (getRowStacks rowIndex (cdr row))))
-        (T (getRowStacks rowIndex (cdr row)))
+        ((not (null (cadar row))) (cons (list rowIndex (caar row)) (getRowNonEmpty rowIndex (cdr row))))
+        (T (getRowNonEmpty rowIndex (cdr row)))
     )
 )
 
-(defun getAllStacks (state)
+(defun getNonEmtpy (state)
+    "Returns non empty squares. List of (row column)."
     (cond 
         ((null state) ())
-        (T (append (getRowStacks (caar state) (cadar state)) (getAllStacks (cdr state))))
+        (T (append (getRowNonEmpty (caar state) (cadar state)) (getNonEmtpy (cdr state))))
     )
 )
 
@@ -180,6 +182,7 @@
 )
 
 (defun distance (row col oRow oCol iRow iCol)
+    "Returns distance between 2 stacks, unless it's second stack is ignored stack."
     (cond 
         ((and (= oRow iRow) (= oCol iCol)) 9999)
         (T (max (abs (- row oRow)) (abs (- col oCol))))
@@ -188,6 +191,7 @@
 )
 
 (defun minDistance (row col others distance iRow iCol)
+    "Return minimum distance between one and every other stack."
     (cond 
         ((null others) distance)
         (T
@@ -199,24 +203,17 @@
             )
         )
     )
-    
-    
 )
 
 (defun isClosestMove (sRow sCol dRow dCol state)
-    (let* ((others (getAllStacks state)) (dDist (minDistance dRow dCol others 9999 sRow sCol)) (sDist (minDistance sRow sCol others 9999 sRow sCol)))
-        (write-line "DISTANCE")
-        (write-line "")
-        (write-line "")
-        (write dDist)
-        (write sDist)
-        (write-line "")
-        (write-line "")
+    "Checks if moving is towards the closest (or one of the closest) stack."
+    (let* ((others (getNonEmtpy state)) (dDist (minDistance dRow dCol others 9999 sRow sCol)) (sDist (minDistance sRow sCol others 9999 sRow sCol)))
         (< dDist sDist)
     )
 )
 
 (defun checkValid (src dest level state)
+    "Checks if move from src (@level) to dest is valid."
     (let* (
     (sRow (car src))
     (sCol (car (last src)))
@@ -236,6 +233,12 @@
             )
         )
     )
+)
+
+(defun splitStack (stay move level)
+    "Splits 'move' list and moves top part to 'stay' list."
+    (list (append stay (nthcdr level move)) (subseq move 0 level))
+    ;; (list (append stay (nthcdr (- level 1) move)) (subseq move 0 (- level 1)))
 )
 
 (defun moveStack (source destination level env)
@@ -279,12 +282,6 @@
             (playMove env)
         )
     )
-)
-
-(defun splitStack (stay move level)
-    "Splits 'move' and moves top part to 'stay'"
-    (list (append stay (nthcdr level move)) (subseq move 0 level))
-    ;; (list (append stay (nthcdr (- level 1) move)) (subseq move 0 (- level 1)))
 )
 
 (defun playMove (env)
@@ -392,6 +389,7 @@
 )
 
 (defun deepen (list n)
+    "Generates children of last (quasi-terminal) nodes."
     (cond 
         ((or (null list) (= n 0)) ())
         ((listp list)
@@ -416,6 +414,7 @@
 )
 
 (defun printPretty (node indent last)
+    "Prints pretty tree starting from given node."
     (write-line "")
     (write-string indent)
     (cond 
@@ -436,6 +435,7 @@
 )
 
 (defun printStackWinners (stackWinners)
+    "Prints list of stack winners."
     (cond 
         ((not (null stackWinners))
             (write-line "")
@@ -448,6 +448,7 @@
 )
 
 (defun checkWinner (stackWinners half)
+    "Checks and returns winner if there is enough stack winners to end the game."
     (cond 
         ((>= (frequency 'X stackWinners) half) 'X)
         ((>= (frequency 'O stackWinners) half) 'O)
@@ -456,6 +457,7 @@
 )
 
 (defun frequency (el list)
+    "Returns counts of occurence frequency of element in list. Non recursive."
     (cond 
         ((null list) 0)
         ((equal el (car list)) (+ 1 (frequency el (cdr list))))
@@ -464,6 +466,7 @@
 )
 
 (defun toggle (checker)
+    "Returns other checker based on input."
     (cond 
         ((equal checker 'X) 'O)
         (checker 'X)
@@ -471,7 +474,7 @@
 )
 
 (defun main ()
-
+    "Main function."
     (write-line "")
     (write-line "Enter field size:")
     (let* (
@@ -515,7 +518,7 @@
                                 )
                                 (T
                                     (cond 
-                                        (AI (write-string "AI PLAYS ASTONISHING MOVE!"))
+                                        (AI (write-line "") (write-string "AI PLAYS ASTONISHING MOVE!"))
                                         (T
                                             (setq env (playMove env))
                                             (printBoard (environment-state env) T n)
@@ -550,7 +553,7 @@
                             )
                         )
                         ((= action 5)
-                            (print (getAllStacks (environment-state env)))
+                            (print (getNonEmtpy (environment-state env)))
                         )
                         (T 
                             (write-line "Please choose correct action.")
