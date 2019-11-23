@@ -1,0 +1,1 @@
+[ ] Pamtiti u state-u listu sa (row column) square-ova koji nisu prazni. (Za odredjivanje medjusobne daljine)

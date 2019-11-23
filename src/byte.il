@@ -4,7 +4,7 @@ defconstant(*allowed1* '(1 3 5 7 9 11 13 15 17 19))
 defconstant(*allowed2* '(2 4 6 8 10 12 14 16 18 20))
 
 defstruct(node environment (value 'HV) (children '()))
-defstruct(environment state (stackWinners '()))
+defstruct(environment state (stackWinners '()) (checker 'X))
 
 defvar(DEV-nodeCount 1) // help variable for development
 
@@ -154,9 +154,26 @@ defun(checkSquare (row column)
     =(mod(+(row column) 2) 0)
 )
 
-defun(getSquareStack (row column state)
-    "Returns square stack on given row/column."
+defun(getStack (row column state)
+    "Returns stack on given row/column."
     cadr(assoc(column cadr(assoc(row state))))
+)
+
+defun(getRowNonEmpty (rowIndex row)
+    "Retruns all non empty squares in one row. (row column)"
+    cond(
+        (null(row) ())
+        (not(null(cadar(row))) cons(list(rowIndex caar(row)) getRowNonEmpty(rowIndex cdr(row))))
+        (T getRowNonEmpty(rowIndex cdr(row)))
+    )
+)
+
+defun(getNonEmtpy (state)
+    "Returns non empty squares. List of (row column)."
+    cond(
+        (null(state) ())
+        (T append(getRowNonEmpty(caar(state) cadar(state)) getNonEmtpy(cdr(state))))
+    )
 )
 
 defun(getSquare (row column state)
@@ -164,29 +181,93 @@ defun(getSquare (row column state)
     assoc(column cadr(assoc(row state)))
 )
 
-defun(moveStack (sRow sColumn dRow dColumn level env)
+defun(distance (row col oRow oCol iRow iCol)
+    "Returns distance between 2 stacks, unless it's second stack is ignored stack."
+    cond(
+        (and(=(oRow iRow) =(oCol iCol)) 9999)
+        (T max(abs(-(row oRow)) abs(-(col oCol))))
+    )
+   
+)
+
+defun(minDistance (row col others distance iRow iCol)
+    "Return minimum distance between one and every other stack."
+    cond(
+        (null(others) distance)
+        (T
+            let*(((first car(others)) (oRow car(first)) (oCol cadr(first)) (current distance(row col oRow oCol iRow iCol)))
+                if(<(current distance)
+                    setq(distance current)
+                )
+                minDistance(row col cdr(others) distance iRow iCol)
+            )
+        )
+    )
+)
+
+defun(isClosestMove (sRow sCol dRow dCol state)
+    "Checks if moving is towards the closest (or one of the closest) stack."
+    let*(((others getNonEmtpy(state)) (dDist minDistance(dRow dCol others 9999 sRow sCol)) (sDist minDistance(sRow sCol others 9999 sRow sCol)))
+        <(dDist sDist)
+    )
+)
+
+defun(checkValid (src dest level state)
+    "Checks if move from src (@level) to dest is valid."
+    let*((
+    (sRow car(src))
+    (sCol car(last(src)))
+    (dRow car(dest))
+    (dCol car(last(dest))))
+        and(
+            checkSquare(sRow sCol) 
+            
+            =(abs(-(sRow dRow)) 1)
+            =(abs(-(sCol dCol)) 1)
+
+            cond(
+                (null(getStack(dRow dCol state))
+                    and(isClosestMove(sRow sCol dRow dCol state) =(level 0))
+                )
+                (T T)
+            )
+        )
+    )
+)
+
+defun(splitStack (stay move level)
+    "Splits 'move' list and moves top part to 'stay' list."
+    list(append(stay nthcdr(level move)) subseq(move 0 level))
+    // list(append(stay nthcdr(-(level 1) move)) subseq(move 0 -(level 1)))
+)
+
+defun(moveStack (source destination level env)
     "Moves one stack to another or to an empty place. Takes top of stack by level."
     cond(
-        (and(checkSquare(sRow sColumn) checkSquare(dRow dColumn))
+        (checkValid(source destination level environment-state(env))
             let*((
             (newEnv copy-environment(env))
             (newState copy-tree(environment-state(newEnv)))
             (newStackWinners copy-tree(environment-stackWinners(newEnv)))
-            (src getSquareStack(sRow sColumn newState))
-            (dest getSquareStack(dRow dColumn newState))
+            (sRow car(source))
+            (sCol car(last(source)))
+            (dRow car(destination))
+            (dCol car(last(destination)))
+            (src getStack(sRow sCol newState))
+            (dest getStack(dRow dCol newState))
             (list splitStack(dest src level))
             (sDest car(list))
             (sSrc cadr(list)))
                 // print(sSrc)
                 // print(sDest)
-                setf(cadr(getSquare(sRow sColumn newState)) sSrc)
+                setf(cadr(getSquare(sRow sCol newState)) sSrc)
                 cond(
                     (=(length(sDest) 8)
-                        setf(cadr(getSquare(dRow dColumn newState)) '())
+                        setf(cadr(getSquare(dRow dCol newState)) '())
                         setq(newStackWinners append(last(sDest) newStackWinners))  
                     )
                     (T
-                        setf(cadr(getSquare(dRow dColumn newState)) sDest)
+                        setf(cadr(getSquare(dRow dCol newState)) sDest)
                     )
                 )        
                 setf(environment-state(newEnv) newState)
@@ -194,17 +275,17 @@ defun(moveStack (sRow sColumn dRow dColumn level env)
                 newEnv
             )
         )
-        (T write-line("Invalid move") env)
+        (T 
+            write-line("")
+            write-line("") 
+            write-line("Invalid move.") 
+            playMove(env)
+        )
     )
 )
 
-defun(splitStack (stay move count)
-    "Splits 'move' and moves top part to 'stay'"
-    list(append(stay nthcdr(-(count 1) move)) subseq(move 0 -(count 1)))
-)
-
-defun(playMove (state)
-    "Allows player to choose a valid move to play and returns a new game state."
+defun(playMove (env)
+    "Allows player to choose a move to play and returns a new environment."
     write-line("")
     write-line("Enter source row (A B C ...):")
     let(((sRow cadr(assoc(read() *numberByLetter*))))
@@ -215,8 +296,24 @@ defun(playMove (state)
                 write-line("Enter destination column (1 2 3...):")
                 let(((dColumn read()))
                     write-line("Enter source level:")
-                    let(((level read()))
-                        moveStack(sRow sColumn dRow dColumn level state)
+                    let*((
+                    (level read())
+                    (stackOwner nth(level getStack(sRow sColumn environment-state(env))))
+                    )
+                        cond(
+                            (equal(stackOwner environment-checker(env)) 
+                                moveStack(list(sRow sColumn) list(dRow dColumn) level env)
+                            )
+                            (T
+                                write-line("")
+                                write-line("") 
+                                write-line("You are not stack owner!")
+                                playMove(env)
+                            )
+                            
+                        )
+                       
+                        
                     )
                 )
             )
@@ -234,41 +331,41 @@ defun(generatePossibleOutcomes (env player)
     cond(
         (=(player 0)
             let(((outcomes list(
-                moveStack(7 1 6 2 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env)
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env)
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env) 
-                moveStack(7 3 6 4 1 env)
+                moveStack(list(7 1) list(6 2) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env)
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env)
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env) 
+                moveStack(list(7 3) list(6 4) 1 env)
                 // 35
             )))
                 setq(DEV-nodeCount +(DEV-nodeCount length(outcomes)))
@@ -278,7 +375,7 @@ defun(generatePossibleOutcomes (env player)
             
         )
         (=(player 1)
-            list(moveStack(2 8 3 7 1 env) moveStack(2 6 3 5 1 env))
+            list(moveStack(list(2 8) list(3 7) 1 env) moveStack(list(2 6) list(3 5) 1 env))
         )
     )
 )
@@ -292,6 +389,7 @@ defun(outcomesToNodes (list)
 )
 
 defun(deepen (list n)
+    "Generates children of last (quasi-terminal) nodes."
     cond(
         (or(null(list) =(n 0)) ())
         (listp(list)
@@ -316,6 +414,7 @@ defun(deepen (list n)
 )
 
 defun(printPretty (node indent last)
+    "Prints pretty tree starting from given node."
     write-line("")
     write-string(indent)
     cond(
@@ -336,18 +435,29 @@ defun(printPretty (node indent last)
 )
 
 defun(printStackWinners (stackWinners)
-    if(not(null(stackWinners)) write(stackWinners))
+    "Prints list of stack winners."
+    cond(
+        (not(null(stackWinners))
+            write-line("")
+            write(stackWinners)
+        )
+        (T
+            write-line("No won stacks.")
+        )
+    )
 )
 
-defun(checkWinner (stackWinners)
+defun(checkWinner (stackWinners half)
+    "Checks and returns winner if there is enough stack winners to end the game."
     cond(
-        (=(frequency('X stackWinners) 2) 'X)
-        (=(frequency('O stackWinners) 2) 'O)
+        (>=(frequency('X stackWinners) half) 'X)
+        (>=(frequency('O stackWinners) half) 'O)
         (T ())
     )
 )
 
 defun(frequency (el list)
+    "Returns counts of occurence frequency of element in list. Non recursive."
     cond(
         (null(list) 0)
         (equal(el car(list)) +(1 frequency(el cdr(list))))
@@ -355,11 +465,8 @@ defun(frequency (el list)
     )
 )
 
-defun(checkValid (src dest level state)
-    
-)
-
 defun(toggle (checker)
+    "Returns other checker based on input."
     cond(
         (equal(checker 'X) 'O)
         (checker 'X)
@@ -367,13 +474,13 @@ defun(toggle (checker)
 )
 
 defun(main ()
-
+    "Main function."
     write-line("")
     write-line("Enter field size:")
     let*((
     (n read())
     (env make-environment(:state generatePlayingField(n n)))
-    (checker 'X)
+    (minForWin /(*(n -(n 2)) 32))
     )
         write-line("AI should play? (X, O or NO)")
         let*((
@@ -391,15 +498,21 @@ defun(main ()
                         (=(action 1)
                             write-line("")
                             printBoard(environment-state(env) T n)
+                            write-string("Won stacks: ")
                             printStackWinners(environment-stackWinners(env))
+
+                            write-string("Now plays: ")
+                            write(environment-checker(env))
                         )
                         (=(action 2)
                             write-line("")
                             write(environment-state(env))
                         )
                         (=(action 3)
+                            write-string("Now plays: ")
+                            write(environment-checker(env))
                             cond(
-                                (equal(player checker)
+                                (equal(player environment-checker(env))
                                     setq(env playMove(env))
                                     printBoard(environment-state(env)T n)
                                 )
@@ -408,22 +521,24 @@ defun(main ()
                                         (AI write-string("AI PLAYS ASTONISHING MOVE!"))
                                         (T
                                             setq(env playMove(env))
-                                            printBoard(environment-state(env)T n)
+                                            printBoard(environment-state(env) T n)
                                         )
                                     )
                                 )
                             )
 
-                            let(((winner checkWinner(environment-stackWinners(env))))
+                            let(((winner checkWinner(environment-stackWinners(env) minForWin)))
                                 cond(
                                     (not(null(winner))
-                                        write-line("Winner is ")
+                                        write-string("Winner is ")
                                         write(winner)
+                                        write-string("!")
+                                        exit()
                                     )
                                 )
                             )
                             
-                            setq(checker toggle(checker))              
+                            setf(environment-checker(env) toggle(environment-checker(env)))              
                         )
                         (=(action 4)
                             write-line("Depth:")
@@ -437,11 +552,15 @@ defun(main ()
                                 // room()
                             )
                         )
+                        (=(action 5)
+                            print(getNonEmtpy(environment-state(env)))
+                        )
                         (T 
                             write-line("Please choose correct action.")
                         )
                     )
                     write-line("")
+                    write-line("1: print board, 2: write state, 3: play a move, -1: exit")
                     write-line("Choose another action:")
                     write-line("")
                     setq(action read())
