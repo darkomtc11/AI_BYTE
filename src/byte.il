@@ -1,7 +1,5 @@
-defconstant(*numberByLetter* '((A 1) (B 2) (C 3) (D 4) (E 5) (F 6) (G 7) (H 8) (I 9) (J 10) (K 11) (L 12) (M 13) (N 14) (O 15) (P 16) (Q 17) (R 18) (S 19) (T 20)))
-defconstant(*letterByNumber* '((1 A) (2 B) (3 C) (4 D) (5 E) (6 F) (7 G) (8 H) (9 I) (10 J) (11 K) (12 L) (13 M) (14 N) (15 O) (16 P) (17 Q) (18 R) (19 S) (20 T)))
-defconstant(*allowed1* '(1 3 5 7 9 11 13 15 17 19))
-defconstant(*allowed2* '(2 4 6 8 10 12 14 16 18 20))
+defconstant(*numberByLetter* '((A 1) (B 2) (C 3) (D 4) (E 5) (F 6) (G 7) (H 8) (I 9) (J 10) (S -1)))
+defconstant(*letterByNumber* '((1 A) (2 B) (3 C) (4 D) (5 E) (6 F) (7 G) (8 H) (9 I) (10 J)))
 
 defstruct(node environment (value 'HV) (children '()))
 defstruct(environment state (stackWinners '()) (checker 'X))
@@ -333,33 +331,38 @@ defun(playMove (env)
     "Allows player to choose a move to play and returns a new environment."
     // "@param {environment} env: environment"
     write-line("")
-    write-line("Enter source row (A B C ...):")
-    let(((sRow cadr(assoc(read() *numberByLetter*))))
-        write-line("Enter source column (1 2 3...):")
-        let(((sColumn read()))
-            write-line("Enter destination row (A B C ...):")
-            let(((dRow cadr(assoc(read() *numberByLetter*))))
-                write-line("Enter destination column (1 2 3...):")
-                let(((dColumn read()))
-                    write-line("Enter source level:")
-                    let*((
-                    (level read())
-                    (stackOwner nth(level getStack(sRow sColumn environment-state(env))))
-                    )
-                        cond(
-                            (equal(stackOwner environment-checker(env)) 
-                                moveStack(list(sRow sColumn) list(dRow dColumn) level env)
+    write-line("Enter source row (A B C ...) or S to skip:")
+    let*(((sRow cadr(assoc(read() *numberByLetter*))))
+        cond(
+            (=(sRow -1) env)
+            (T 
+                write-line("Enter source column (1 2 3...):")
+                let(((sColumn read()))
+                    write-line("Enter destination row (A B C ...):")
+                    let(((dRow cadr(assoc(read() *numberByLetter*))))
+                        write-line("Enter destination column (1 2 3...):")
+                        let(((dColumn read()))
+                            write-line("Enter source level:")
+                            let*((
+                            (level read())
+                            (stackOwner nth(level getStack(sRow sColumn environment-state(env))))
                             )
-                            (T
-                                write-line("")
-                                write-line("") 
-                                write-line("You are not stack owner!")
-                                playMove(env)
-                            )
+                                cond(
+                                    (equal(stackOwner environment-checker(env)) 
+                                        moveStack(list(sRow sColumn) list(dRow dColumn) level env)
+                                    )
+                                    (T
+                                        write-line("")
+                                        write-line("") 
+                                        write-line("You are not stack owner!")
+                                        playMove(env)
+                                    )
+                                    
+                                )
                             
+                                
+                            )
                         )
-                       
-                        
                     )
                 )
             )
@@ -529,9 +532,13 @@ defun(toggle (checker)
 defun(main ()
     "Main function."
     write-line("")
-    write-line("Enter field size:")
+    write-line("Enter field size (8 or 10, default 8):")
     let*((
-    (n read())
+    (inputSize read())
+    (n cond(
+        (not(or(=(inputSize 8) =(inputSize 10))) 8)
+        (T inputSize)
+    ))
     (env make-environment(:state generatePlayingField(n n)))
     (minForWin /(*(n -(n 2)) 32))
     )
@@ -541,7 +548,7 @@ defun(main ()
         (player if(or(equal(string-upcase(AI) "NO")) 'X toggle(AI)))
         (AI not(equal(string-upcase(AI) "NO")))
         )
-
+            printBoard(environment-state(env) T n)
 
             write-string("1: print board, 2: write state, 3: play a move, -1: exit")
             write-line("")
