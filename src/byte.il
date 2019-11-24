@@ -13,43 +13,41 @@ defun(generatePlayingField (current n)
     cond(
         (=(current 0) ())
         (T
-            cons(generateRow(current n) generatePlayingField(-(current 1) n))
+            append(generatePlayingField(-(current 1) n) list(generateRow(current n)))
         )
     )
 )
 
 defun(generateRow (rowIndex n)
     "Initiates full row stack generation."
-    let(((index +(-(n rowIndex) 1)) (size /(n 2)) (type mod(rowIndex 2)))
+    let*((
+    (type mod(rowIndex 2)) 
+    (start -(n type))
+    )
         cons(
-            index
-            list(generateStacks(type size
+            rowIndex
+            list(generateStacks(start
                 cond(
                     (or(=(rowIndex 1) =(rowIndex n))
                         ()
                     )
-                    (=(type 0)
+                    (=(type 1)
                         '(X)
                     )
                     (T
                         '(O)
                     )
-                ) n
+                )
             ))
         )
     )
 )
 
-defun(generateStacks (type curr data n)
+defun(generateStacks (curr data)
     "Generates all stacks of one row based on type (odd/even) and puts given data on stack."
-    let(((index -(/(n 2) curr)) (next -(curr 1)))
-        cond(
-            (=(curr 0) ())
-            (=(mod(type 2) 0) // gore levo - 0: CRNO, 1: BELO
-                cons(cons(nth(index *allowed1*) list(data)) generateStacks(type next data n))
-            )
-            (T cons(cons(nth(index *allowed2*) list(data)) generateStacks(type next data n)))
-        )
+    cond(
+        (<(curr 0) ())
+        (T append(generateStacks(-(curr 2) data) list(cons(curr list(data)))))
     )
 )
 
@@ -85,7 +83,6 @@ defun(printRow (row type curr n)
     "Prints row in three parts. Calls it self 2 times with different type."
     cond(
         (=(curr -1)
-            
             cond(
                 (=(type 3) ())
                 (T
@@ -122,27 +119,16 @@ defun(printRow (row type curr n)
 
 defun(printSquare (square part)
     "Prints one third of stacked checkers on given square."
-    cond(
-        (=(part 1)
-            printChecker(nth(8 cadr(square)))
-            printChecker(nth(7 cadr(square)))
-            printChecker(nth(6 cadr(square)))
-        )
-        (=(part 2)
-            printChecker(nth(5 cadr(square)))
-            printChecker(nth(4 cadr(square)))
-            printChecker(nth(3 cadr(square)))
-        )
-        (=(part 3)
-            printChecker(nth(2 cadr(square)))
-            printChecker(nth(1 cadr(square)))
-            printChecker(nth(0 cadr(square)))
-        )
-    )
+    // "@param {(X O ...)} square: list of checkers"
+    // "@param {int} part: top, middle or bottom 3"
+    printChecker(nth(-( -( 8 *( -( part 1) 3)) 0) cadr(square)))
+    printChecker(nth(-( -( 8 *( -( part 1) 3)) 1) cadr(square)))
+    printChecker(nth(-( -( 8 *( -( part 1) 3)) 2) cadr(square)))
 )
 
 defun(printChecker (checker)
     "Prints checkers one by one."
+    // "@param {X, O or NULL} checker: checker"
     cond(
         (null(checker) write-string("- "))
         (T write(checker) write-string(" "))
@@ -151,16 +137,31 @@ defun(printChecker (checker)
 
 defun(checkSquare (row column)
     "Checks is given row/column returns valid (dark) square."
+    // "@param {int} row: row"
+    // "@param {int} column: column"
     =(mod(+(row column) 2) 0)
+)
+
+defun(getSquare (row column state)
+    "Returns square on given row/column alongside column key."
+    // "@param {int} row: row"
+    // "@param {int} column: column"
+    // "@param {( (row (col ())) )} state: memory representation of the game board"
+    assoc(column cadr(assoc(row state)))
 )
 
 defun(getStack (row column state)
     "Returns stack on given row/column."
-    cadr(assoc(column cadr(assoc(row state))))
+    // "@param {int} row: row"
+    // "@param {int} column: column"
+    // "@param {( (row (col ())) )} state: memory representation of the game board"
+    cadr(getSquare(row column state))
 )
 
 defun(getRowNonEmpty (rowIndex row)
-    "Retruns all non empty squares in one row. (row column)"
+    "Returns all non empty squares in one row. (row column)"
+    // "@param {int} rowIndex: row index"
+    // "@param {( (col (X O ...)) )} row: list of valid squares in a row"
     cond(
         (null(row) ())
         (not(null(cadar(row))) cons(list(rowIndex caar(row)) getRowNonEmpty(rowIndex cdr(row))))
@@ -170,19 +171,21 @@ defun(getRowNonEmpty (rowIndex row)
 
 defun(getNonEmtpy (state)
     "Returns non empty squares. List of (row column)."
+    // "@param {( (row (col ())) )} state: memory representation of the game board"
     cond(
         (null(state) ())
         (T append(getRowNonEmpty(caar(state) cadar(state)) getNonEmtpy(cdr(state))))
     )
 )
 
-defun(getSquare (row column state)
-    "Returns square on given row/column alongside column key."
-    assoc(column cadr(assoc(row state)))
-)
-
 defun(distance (row col oRow oCol iRow iCol)
     "Returns distance between 2 stacks, unless it's second stack is ignored stack."
+    // "@param {int} row: source row"
+    // "@param {int} col: source column"
+    // "@param {int} oRow: destination row"
+    // "@param {int} oCol: destination column"
+    // "@param {int} iRow: ignored row"
+    // "@param {int} iCol: ignored column"
     cond(
         (and(=(oRow iRow) =(oCol iCol)) 9999)
         (T max(abs(-(row oRow)) abs(-(col oCol))))
@@ -192,10 +195,21 @@ defun(distance (row col oRow oCol iRow iCol)
 
 defun(minDistance (row col others distance iRow iCol)
     "Return minimum distance between one and every other stack."
+    // "@param {int} row: source row"
+    // "@param {int} col: source column"
+    // "@param {((row col))} others: list of other stack"
+    // "@param {int} distance: minimal distance"
+    // "@param {int} iRow: ignored row"
+    // "@param {int} iCol: ignored column"
     cond(
         (null(others) distance)
         (T
-            let*(((first car(others)) (oRow car(first)) (oCol cadr(first)) (current distance(row col oRow oCol iRow iCol)))
+            let*((
+            (first car(others)) 
+            (oRow car(first)) 
+            (oCol cadr(first)) 
+            (current distance(row col oRow oCol iRow iCol))
+            )
                 if(<(current distance)
                     setq(distance current)
                 )
@@ -207,13 +221,26 @@ defun(minDistance (row col others distance iRow iCol)
 
 defun(isClosestMove (sRow sCol dRow dCol state)
     "Checks if moving is towards the closest (or one of the closest) stack."
-    let*(((others getNonEmtpy(state)) (dDist minDistance(dRow dCol others 9999 sRow sCol)) (sDist minDistance(sRow sCol others 9999 sRow sCol)))
+    // "@param {int} sRow: source row"
+    // "@param {int} sCol: source column"
+    // "@param {int} dRow: destination row"
+    // "@param {int} dCol: destination column"
+    // "@param {( (row (col ())) )} state: memory representation of the game board"
+    let*((
+    (others getNonEmtpy(state)) 
+    (dDist minDistance(dRow dCol others 9999 sRow sCol)) 
+    (sDist minDistance(sRow sCol others 9999 sRow sCol))
+    )
         <(dDist sDist)
     )
 )
 
 defun(checkValid (src dest level state)
     "Checks if move from src (@level) to dest is valid."
+    // "@param {( (row col) )} src: source stack"
+    // "@param {( (row col) )} dest: destination stack"
+    // "@param {int} level: stack level"
+    // "@param {( (row (col ())) )} state: memory representation of the game board"
     let*((
     (sRow car(src))
     (sCol car(last(src)))
@@ -235,14 +262,20 @@ defun(checkValid (src dest level state)
     )
 )
 
-defun(splitStack (stay move level)
-    "Splits 'move' list and moves top part to 'stay' list."
-    list(append(stay nthcdr(level move)) subseq(move 0 level))
-    // list(append(stay nthcdr(-(level 1) move)) subseq(move 0 -(level 1)))
+defun(splitStack (dest src level)
+    "Splits 'src' stack and moves top part to 'dest' stack."
+    // "@param {( X O ... )} src: source stack"
+    // "@param {( X O ... )} dest: destination stack"
+    // "@param {int} level: source stack level"
+    list(append(dest nthcdr(level src)) subseq(src 0 level))
 )
 
 defun(moveStack (source destination level env)
     "Moves one stack to another or to an empty place. Takes top of stack by level."
+    // "@param {( row col )} source: source stack position"
+    // "@param {( row col )} destination: destination stack position"
+    // "@param {int} level: source stack level"
+    // "@param {environment} env: environment"
     cond(
         (checkValid(source destination level environment-state(env))
             let*((
@@ -298,6 +331,7 @@ defun(moveStack (source destination level env)
 
 defun(playMove (env)
     "Allows player to choose a move to play and returns a new environment."
+    // "@param {environment} env: environment"
     write-line("")
     write-line("Enter source row (A B C ...):")
     let(((sRow cadr(assoc(read() *numberByLetter*))))
@@ -335,6 +369,7 @@ defun(playMove (env)
 
 defun(isQuasiTerminal (node)
     "Checks if node is quasi terminal (no children)."
+    // "@param {node} node: node"
     null(node-children(node))
 )
 
@@ -448,6 +483,7 @@ defun(printPretty (node indent last)
 
 defun(printStackWinners (stackWinners)
     "Prints list of stack winners."
+    // "@param {(X O X)} stackWinners: list of checkers"
     cond(
         (not(null(stackWinners))
             write-line("")
@@ -461,6 +497,8 @@ defun(printStackWinners (stackWinners)
 
 defun(checkWinner (stackWinners half)
     "Checks and returns winner if there is enough stack winners to end the game."
+    // "@param {(X O X)} stackWinners: list of checkers"
+    // "@param {float} half: needed amount for win"
     cond(
         (>=(frequency('X stackWinners) half) 'X)
         (>=(frequency('O stackWinners) half) 'O)
@@ -469,7 +507,9 @@ defun(checkWinner (stackWinners half)
 )
 
 defun(frequency (el list)
-    "Returns counts of occurence frequency of element in list. Non recursive."
+    "Returns count of occurence frequency of element in list. Not nested."
+    // "@param {any} el: search element"
+    // "@param {( any )} list: list"
     cond(
         (null(list) 0)
         (equal(el car(list)) +(1 frequency(el cdr(list))))
@@ -479,6 +519,7 @@ defun(frequency (el list)
 
 defun(toggle (checker)
     "Returns other checker based on input."
+    // "@param {X or O} checker: element to toggle"
     cond(
         (equal(checker 'X) 'O)
         (checker 'X)
