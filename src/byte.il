@@ -321,7 +321,7 @@ defun(moveStack (source destination level env)
         (T 
             write-line("")
             write-line("") 
-            write-line("Invalid move.") 
+            write-line("Invalid move.You cannot make stack larger than 8.") 
             playMove(env)
         )
     )
