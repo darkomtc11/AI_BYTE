@@ -44,7 +44,7 @@
 (defun generateStacks (curr data)
     "Generates all stacks of one row based on type (odd/even) and puts given data on stack."
     (cond 
-        ((< curr 0) ())
+        ((<= curr 0) ())
         (T (append (generateStacks (- curr 2) data) (list (cons curr (list data)))))
     )
 )
