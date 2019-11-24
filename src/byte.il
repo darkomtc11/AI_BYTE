@@ -264,15 +264,27 @@ defun(moveStack (source destination level env)
                 cond(
                     (=(length(sDest) 8)
                         setf(cadr(getSquare(dRow dCol newState)) '())
-                        setq(newStackWinners append(last(sDest) newStackWinners))  
+                        setq(newStackWinners append(last(sDest) newStackWinners)) 
+
+                        setf(environment-state(newEnv) newState)
+                        setf(environment-stackWinners(newEnv) newStackWinners)
+                        newEnv
+                    )
+                    (>(length(sDest) 8)
+                        write-line("")
+                        write-line("") 
+                        write-line("Invalid move.") 
+                        playMove(env)
                     )
                     (T
                         setf(cadr(getSquare(dRow dCol newState)) sDest)
+
+                        setf(environment-state(newEnv) newState)
+                        setf(environment-stackWinners(newEnv) newStackWinners)
+                        newEnv
                     )
                 )        
-                setf(environment-state(newEnv) newState)
-                setf(environment-stackWinners(newEnv) newStackWinners)
-                newEnv
+                
             )
         )
         (T 
