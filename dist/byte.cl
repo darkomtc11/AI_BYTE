@@ -304,7 +304,7 @@
                     ((> (length sDest) 8)
                         (write-line "")
                         (write-line "") 
-                        (write-line "Invalid move.") 
+                        (write-line "Invalid move. You cannot make stack larger than 8.") 
                         (playMove env)
                     )
                     (T
@@ -489,6 +489,7 @@
     ;; "@param {(X O X)} stackWinners: list of checkers"
     (cond 
         ((not (null stackWinners))
+            (write stackWinners)
             (write-line "")
             (write stackWinners)
         )
