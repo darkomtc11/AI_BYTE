@@ -1,7 +1,7 @@
 Faza I
 
 Definisane su konstante za pomoc pri generisanju i stampanju table.
-To su: *numberByLetter*, *letterByNumber*, *allowed1*, *allowed2*
+To su: *numberByLetter*, *letterByNumber*
 
 Definisana je struktura "environment" koja u sebi sadrži "state", "stackWinners" i "checker".
 "state" predstavlja memorijsku reprezentaciju table sa checkerima.
@@ -16,7 +16,7 @@ Ove funkcije generisu asocijativnu listu asocijativnih listi, gde ključevi pred
 Glavna print funkcija je "printBoard", koja poziva ostale.
 
 Funkcija "main" se poziva na samom pocetku. 
-Dozvoljava unos velicine table, da li i koji po redu igra racunar (AI).
+Dozvoljava unos velicine table (default: 8), da li i koji po redu igra racunar (AI).
 Glavni deo tela funkcije se vrti loop-om i dozvoljava odabir akcije.
 Akcije:
 1: print board (iscrtava tablu na konzoli)
@@ -39,4 +39,6 @@ Akcije koje dozvoljavaju testiranje faze I su 1, 2 i 3.
 Ostale akcije su u izradi, za neku od narednih faza.
 Funkcije i promenljive koje se ne pozivaju akcijama 1, 2 i 3 mogu biti neispravne.
 
-Sve funkcije su opisane stringom u prvoj linije tela funkcije, na engleskom..
+Sve funkcije su opisane stringom u prvoj linije tela funkcije.
+Svi parametri funkcija su opisani komentarom ispod prve linije tela funkcije.
+Opis je na engleskom.
