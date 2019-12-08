@@ -2,9 +2,76 @@ defconstant(*numberByLetter* '((A 1) (B 2) (C 3) (D 4) (E 5) (F 6) (G 7) (H 8) (
 defconstant(*letterByNumber* '((1 A) (2 B) (3 C) (4 D) (5 E) (6 F) (7 G) (8 H) (9 I) (10 J)))
 
 defstruct(node environment (value 'HV) (children '()))
-defstruct(environment state (stackWinners '()) (checker 'X))
+defstruct(environment state (stackWinners '()) (checker 'X) (xPositions '()) (oPositions '()) (heights '()))
 
 defvar(DEV-nodeCount 1) // help variable for development
+
+defun(initializeAllPositions (nonEmpty env)
+    cond(
+        (null(nonEmpty) '())
+        (T
+            if(=(mod(caar(nonEmpty) 2) 0)
+                initializePosition('O car(nonEmpty) '(0) env)
+                initializePosition('X car(nonEmpty) '(0) env)
+            )
+            initializeHeight(car(nonEmpty) 1 env)
+            initializeAllPositions(cdr(nonEmpty) env)
+        )
+    )
+)
+
+defun(initializeHeight (rcPair height env)
+    let(((heights environment-heights(env)))
+        setf(environment-heights(env) append(heights list(list(rcPair height))))
+    )
+)
+
+defun(initializePosition (checker rcPair levels env)
+    let(((positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env))))
+        cond(
+            (equal(checker 'X)
+                setf(environment-xPositions(env) append(positions list(list(rcPair levels))))
+            )
+            (T 
+                setf(environment-oPositions(env) append(positions list(list(rcPair levels))))
+            )
+        )
+    )
+)
+
+defun(addPosition (checker rcPair levels env)
+    let*(((positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env))) (pos assoc(rcPair positions :test #'equal)))
+        cond(
+            (null(pos) 
+                initializePosition(checker rcPair levels env)
+            )
+            (T
+                setf(cdr(pos) list(append(cadr(pos) levels)))
+            )
+        )
+    )
+)
+
+defun(removePosition (checker rcPair level env)
+    let*((
+    (positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)))
+    (pos assoc(rcPair positions :test #'equal))
+    (new remove(level cadr(pos) :test #'<=))
+    )
+        cond(
+            (null(new) setf(if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)) remove(pos positions)))
+            (T
+                setf(cdr(pos) list(new))
+            )
+        )
+    )
+)
+
+defun(reduceLevels (levels to)
+    let(((first -(car(levels) to)))
+        mapcar(#'lambda((x) -(x first)) levels)
+    )
+)
 
 defun(generatePlayingField (current n)
     "Generates whole playing field by generating rows."
@@ -368,8 +435,6 @@ defun(playMove (env)
                                     )
                                     
                                 )
-                            
-                                
                             )
                         )
                     )
@@ -385,69 +450,84 @@ defun(isQuasiTerminal (node)
     null(node-children(node))
 )
 
-defun(generatePossibleOutcomes (env player)
-    "Generates possible outcomes (next states) by state and player."
+defun(generateMovesByLevel (rcPair level env)
+    // write-line("LEVEL:")
+    // write(level)
+    let*((
+    (row car(rcPair))
+    (column cadr(rcPair))
+    (move1 moveStack(rcPair list(+(row 1) +(column 1)) level env '()))
+    (move2 moveStack(rcPair list(+(row 1) -(column 1)) level env '()))
+    (move3 moveStack(rcPair list(-(row 1) -(column 1)) level env '()))
+    (move4 moveStack(rcPair list(-(row 1) +(column 1)) level env '()))
+    (ret list(
+            if(equal(move1 env) '() move1)
+            if(equal(move2 env) '() move2)
+            if(equal(move3 env) '() move3)
+            if(equal(move4 env) '() move4)
+        ))
+    )
+        printBoard(environment-state(move1) T 8)
+        write-line("")
+        write-line("")
+        printBoard(environment-state(move2) T 8)
+        write-line("")
+        write-line("")
+        printBoard(environment-state(move3) T 8)
+        write-line("")
+        write-line("")
+        printBoard(environment-state(move4) T 8)
+        ret
+    )  
+)
+
+defun(generateMoves (position env)
     cond(
-        (=(player 0)
-            let(((outcomes list(
-                moveStack(list(3 1) list(3 3) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                moveStack(list(7 3) list(6 4) 1 env '()) 
-                
-                // 35
-            )))
-                setq(DEV-nodeCount +(DEV-nodeCount length(outcomes)))
-                outcomes
-            )
-            
-            
-        )
-        (=(player 1)
-            list(moveStack(list(2 8) list(3 7) 1 env) moveStack(list(2 6) list(3 5) 1 env))
+        (null(cdr(position)) '())
+        (T
+            cons(generateMovesByLevel(car(position) caadr(position) env) generateMoves(cons(car(position) cddr(position)) env))
         )
     )
+)
+
+defun(generateAllMoves (positions env)
+    cond(
+        (null(positions) '())
+        (T
+            cons(generateMoves(car(positions) env) generateAllMoves(cdr(positions) env))
+            // list(generateMoves(car(positions) env))
+        )
+    )
+)
+
+defun(generatePossibleOutcomes (env)
+    "Generates possible outcomes (next states) by given environment"
+
+    let*((
+    (checker environment-checker(env))
+    (positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)))
+    )
+        generateAllMoves(positions env)
+    )
+
+    // cond(
+    //     (=(environment-checker(env) 'X)
+    //         let(((outcomes list(
+    //             moveStack(list(3 1) list(3 3) 1 env '()) 
+    //             moveStack(list(7 3) list(6 4) 1 env '()) 
+                
+    //             // 35
+    //         )))
+    //             setq(DEV-nodeCount +(DEV-nodeCount length(outcomes)))
+    //             outcomes
+    //         )
+            
+            
+    //     )
+    //     (=(player 1)
+    //         list(moveStack(list(2 8) list(3 7) 1 env) moveStack(list(2 6) list(3 5) 1 env))
+    //     )
+    // )
 )
 
 defun(outcomesToNodes (list)
@@ -563,6 +643,7 @@ defun(main ()
     (env make-environment(:state generatePlayingField(n n)))
     (minForWin /(*(n -(n 2)) 32))
     )
+        initializeAllPositions(getNonEmtpy(environment-state(env)) env)
         write-line("AI should play? (X, O or NO)")
         let*((
         (AI read())
@@ -595,7 +676,7 @@ defun(main ()
                             cond(
                                 (equal(player environment-checker(env))
                                     setq(env playMove(env))
-                                    printBoard(environment-state(env)T n)
+                                    printBoard(environment-state(env) T n)
                                 )
                                 (T
                                     cond(
@@ -634,7 +715,7 @@ defun(main ()
                             )
                         )
                         (=(action 5)
-                            print(getNonEmtpy(environment-state(env)))
+                            generatePossibleOutcomes(env)
                         )
                         (T 
                             write-line("Please choose correct action.")
