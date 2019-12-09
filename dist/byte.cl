@@ -6,94 +6,8 @@
 
 (defvar DEV-nodeCount 1) ;; help variable for development
 
-(defun initializeAllPositions (nonEmpty env)
-    (cond 
-        ((null nonEmpty) '())
-        (T
-            (if (= (mod (caar nonEmpty) 2) 0)
-                (initializePosition 'O (car nonEmpty) '(0) env)
-                (initializePosition 'X (car nonEmpty) '(0) env)
-            )
-            (initializeAllPositions (cdr nonEmpty) env)
-        )
-    )
-)
-
-
-(defun initializePosition (checker rcPair levels env)
-    (let ((positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env))))
-        (cond 
-            ((equal checker 'X)
-                (setf (environment-xPositions env) (append positions (list (list rcPair levels))))
-            )
-            (T 
-                (setf (environment-oPositions env) (append positions (list (list rcPair levels))))
-            )
-        )
-    )
-)
-
-(defun setPosition (checker rcPair levels env)
-    (let* ((positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env))) (pos (assoc rcPair positions :test #'equal)))
-        (cond 
-            ((null pos) 
-                (initializePosition checker rcPair levels env)
-            )
-            (T
-                (setf (cdr pos) (list levels))
-            )
-        )
-    )
-)
-
-;; (defun removePosition (checker rcPair level env)
-;;     (let* (
-;;     (positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env)))
-;;     (pos (assoc rcPair positions :test #'equal))
-;;     (new (remove level (cadr pos) :test #'<=))
-;;     )
-;;         (cond 
-;;             ((null new) (setf (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env)) (remove pos positions)))
-;;             (T
-;;                 (setf (cdr pos) (list new))
-;;             )
-;;         )
-;;     )
-;; )
-
-(defun removePosition (checker rcPair env)
-    (let* (
-    (positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env)))
-    (pos (assoc rcPair positions :test #'equal))
-    )
-        (setf (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env)) (remove pos positions))
-    )
-)
-
-(defun getLevels (stack checker)
-    (indexes (copy-tree stack) checker)
-)
-
-(defun indexes (list e)
-    (cond 
-        ((= (frequency e list) 0) '())
-        (T
-            (let* ((pos (position e list)))
-                (setf (nth pos list) 'Y)
-                (cons pos (indexes list e))
-            )
-        )
-    )
-)
-
-(defun reduceLevels (levels to)
-    (let ((first (- (car levels) to)))
-        (mapcar #'(lambda (x) (- x first)) levels)
-    )
-)
-
 (defun generatePlayingField (current n)
-    "Generates whole playing field by generating rows."
+    ;; Generates whole playing field by generating rows."
     (cond 
         ((= current 0) ())
         (T
@@ -103,7 +17,7 @@
 )
 
 (defun generateRow (rowIndex n)
-    "Initiates full row stack generation."
+    ;; Initiates full row stack generation."
     (let* (
     (type (mod rowIndex 2)) 
     (start (- n type))
@@ -128,15 +42,86 @@
 )
 
 (defun generateStacks (curr data)
-    "Generates all stacks of one row based on type (odd/even) and puts given data on stack."
+    ;; Generates all stacks of one row based on type (odd/even) and puts given data on stack."
     (cond 
         ((<= curr 0) ())
         (T (append (generateStacks (- curr 2) data) (list (cons curr (list data)))))
     )
 )
 
+(defun initializeAllPositions (nonEmpty env)
+    ;; Initializes all help position variables in environment (X and O positions)
+    (cond 
+        ((null nonEmpty) '())
+        (T
+            (if (= (mod (caar nonEmpty) 2) 0)
+                (initializePosition 'O (car nonEmpty) '(0) env)
+                (initializePosition 'X (car nonEmpty) '(0) env)
+            )
+            (initializeAllPositions (cdr nonEmpty) env)
+        )
+    )
+)
+
+
+(defun initializePosition (checker rcPair levels env)
+    ;; Initializes single position in help variables
+    (let ((positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env))))
+        (cond 
+            ((equal checker 'X)
+                (setf (environment-xPositions env) (append positions (list (list rcPair levels))))
+            )
+            (T 
+                (setf (environment-oPositions env) (append positions (list (list rcPair levels))))
+            )
+        )
+    )
+)
+
+(defun setPosition (checker rcPair levels env)
+    ;; Changes single position in help variable
+    (let* ((positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env))) (pos (assoc rcPair positions :test #'equal)))
+        (cond 
+            ((null pos) 
+                (initializePosition checker rcPair levels env)
+            )
+            (T
+                (setf (cdr pos) (list levels))
+            )
+        )
+    )
+)
+
+(defun removePosition (checker rcPair env)
+    ;; Removes all positions in help variable on givem rcPair
+    (let* (
+    (positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env)))
+    (pos (assoc rcPair positions :test #'equal))
+    )
+        (setf (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env)) (remove pos positions))
+    )
+)
+
+(defun getLevels (stack checker)
+    ;; Gets all indexes of a given checker in stack
+    (indexes (copy-tree stack) checker)
+)
+
+(defun indexes (list e)
+    ;; Finds indexes of e in list
+    (cond 
+        ((= (frequency e list) 0) '())
+        (T
+            (let* ((pos (position e list)))
+                (setf (nth pos list) 'Y)
+                (cons pos (indexes list e))
+            )
+        )
+    )
+)
+
 (defun writeNumbers (n)
-    "Prints column numbers."
+    ;; Prints column numbers."
     (cond 
         ((= n 0) (write-string " "))
         (T 
@@ -147,7 +132,7 @@
 )
 
 (defun printBoard (field first n)
-    "Initiaces full board printing"
+    ;; Initiaces full board printing"
     (cond 
         ((= (length field) 0) ())
         (first 
@@ -164,7 +149,7 @@
 )
 
 (defun printRow (row type curr n)
-    "Prints row in three parts. Calls it self 2 times with different type."
+    ;; Prints row in three parts. Calls it self 2 times with different type."
     (cond 
         ((= curr -1)
             (cond 
@@ -202,7 +187,7 @@
 )
 
 (defun printSquare (square part)
-    "Prints one third of stacked checkers on given square."
+    ;; Prints one third of stacked checkers on given square."
     ;; "@param {(X O ...)} square: list of checkers"
     ;; "@param {int} part: top, middle or bottom 3"
     (printChecker (nth (-  (-  8 (*  (-  part 1) 3)) 0) (cadr square)))
@@ -211,7 +196,7 @@
 )
 
 (defun printChecker (checker)
-    "Prints checkers one by one."
+    ;; Prints checkers one by one."
     ;; "@param {X, O or NULL} checker: checker"
     (cond 
         ((null checker) (write-string "- "))
@@ -219,15 +204,8 @@
     )
 )
 
-(defun checkSquare (row column)
-    "Checks is given row/column returns valid (dark) square."
-    ;; "@param {int} row: row"
-    ;; "@param {int} column: column"
-    (= (mod (+ row column) 2) 0)
-)
-
 (defun getSquare (row column state)
-    "Returns square on given row/column alongside column key."
+    ;; Returns square on given row/column alongside column key."
     ;; "@param {int} row: row"
     ;; "@param {int} column: column"
     ;; "@param {( (row (col ())) )} state: memory representation of the game board"
@@ -235,7 +213,7 @@
 )
 
 (defun getStack (row column state)
-    "Returns stack on given row/column."
+    ;; Returns stack on given row/column."
     ;; "@param {int} row: row"
     ;; "@param {int} column: column"
     ;; "@param {( (row (col ())) )} state: memory representation of the game board"
@@ -243,7 +221,7 @@
 )
 
 (defun getRowNonEmpty (rowIndex row)
-    "Returns all non empty squares in one row. (row column)"
+    ;; Returns all non empty squares in one row. (row column)"
     ;; "@param {int} rowIndex: row index"
     ;; "@param {( (col (X O ...)) )} row: list of valid squares in a row"
     (cond 
@@ -254,7 +232,7 @@
 )
 
 (defun getNonEmtpy (state)
-    "Returns non empty squares. List of (row column)."
+    ;; Returns non empty squares. List of (row column)."
     ;; "@param {( (row (col ())) )} state: memory representation of the game board"
     (cond 
         ((null state) ())
@@ -263,7 +241,7 @@
 )
 
 (defun distance (row col oRow oCol iRow iCol)
-    "Returns distance between 2 stacks, unless it's second stack is ignored stack."
+    ;; Returns distance between 2 stacks, unless it's second stack is ignored stack."
     ;; "@param {int} row: source row"
     ;; "@param {int} col: source column"
     ;; "@param {int} oRow: destination row"
@@ -278,7 +256,7 @@
 )
 
 (defun minDistance (row col others distance iRow iCol)
-    "Return minimum distance between one and every other stack."
+    ;; Return minimum distance between one and every other stack."
     ;; "@param {int} row: source row"
     ;; "@param {int} col: source column"
     ;; "@param {((row col))} others: list of other stack"
@@ -304,7 +282,7 @@
 )
 
 (defun isClosestMove (sRow sCol dRow dCol state)
-    "Checks if moving is towards the closest (or one of the closest) stack."
+    ;; Checks if moving is towards the closest (or one of the closest) stack."
     ;; "@param {int} sRow: source row"
     ;; "@param {int} sCol: source column"
     ;; "@param {int} dRow: destination row"
@@ -320,7 +298,7 @@
 )
 
 (defun checkValid (src dest level state)
-    "Checks if move from src (@level) to dest is valid."
+    ;; Checks if move from src (@level) to dest is valid."
     ;; "@param {( (row col) )} src: source stack"
     ;; "@param {( (row col) )} dest: destination stack"
     ;; "@param {int} level: stack level"
@@ -331,7 +309,8 @@
     (dRow (car dest))
     (dCol (car (last dest))))
         (and 
-            (checkSquare sRow sCol) 
+            (getSquare sRow sCol state) 
+            (getSquare dRow dCol state) 
             
             (= (abs (- sRow dRow)) 1)
             (= (abs (- sCol dCol)) 1)
@@ -347,7 +326,7 @@
 )
 
 (defun splitStack (dest src level)
-    "Splits 'src' stack and moves top part to 'dest' stack."
+    ;; Splits 'src' stack and moves top part to 'dest' stack."
     ;; "@param {( X O ... )} src: source stack"
     ;; "@param {( X O ... )} dest: destination stack"
     ;; "@param {int} level: source stack level"
@@ -355,7 +334,7 @@
 )
 
 (defun moveStack (source destination level env forceMove)
-    "Moves one stack to another or to an empty place. Takes top of stack by level."
+    ;; Moves one stack to another or to an empty place. Takes top of stack by level."
     ;; "@param {( row col )} source: source stack position"
     ;; "@param {( row col )} destination: destination stack position"
     ;; "@param {int} level: source stack level"
@@ -366,8 +345,6 @@
             (newEnv (copy-environment env))
             (newState (copy-tree (environment-state newEnv)))
             (newStackWinners (copy-tree (environment-stackWinners newEnv)))
-            ;; (newXPositions (copy-tree (environment-xPositions newEnv)))
-            ;; (newOPositions (copy-tree (environment-oPositions newEnv)))
             (sRow (car source))
             (sCol (car (last source)))
             (dRow (car destination))
@@ -377,8 +354,6 @@
             (list (splitStack dest src level))
             (sDest (car list))
             (sSrc (cadr list)))
-                ;; (print sSrc)
-                ;; (print sDest)
                 (setf (cadr (getSquare sRow sCol newState)) sSrc)
 
                 (let (
@@ -402,10 +377,8 @@
                         ((= (length sDest) 8)
                             (setf (cadr (getSquare dRow dCol newState)) '())
                             (setq newStackWinners (append (last sDest) newStackWinners)) 
-
-                            
-
                             (setf (environment-state newEnv) newState)
+
                             (setf (environment-stackWinners newEnv) newStackWinners)
                             (setf (environment-xPositions newEnv) (copy-tree (environment-xPositions newEnv)))
                             (setf (environment-oPositions newEnv) (copy-tree (environment-oPositions newEnv)))
@@ -416,12 +389,14 @@
                             (removePosition 'X destination newEnv)
                             (removePosition 'O destination newEnv)
 
+                            (setf (environment-checker newEnv) (toggle (environment-checker newEnv)))
+
                             newEnv
                         )
                         (T
                             (setf (cadr (getSquare dRow dCol newState)) sDest)
-
                             (setf (environment-state newEnv) newState)
+                           
                             (setf (environment-stackWinners newEnv) newStackWinners)
                             (setf (environment-xPositions newEnv) (copy-tree (environment-xPositions newEnv)))
                             (setf (environment-oPositions newEnv) (copy-tree (environment-oPositions newEnv)))
@@ -431,6 +406,8 @@
 
                             (setPosition 'X destination dXLevels newEnv)
                             (setPosition 'O destination dOLevels newEnv)
+
+                            (setf (environment-checker newEnv) (toggle (environment-checker newEnv)))
 
                             newEnv
                         )
@@ -444,44 +421,45 @@
             (write-line "Invalid move.") 
             (playMove env)
         )
-        (T 
-            ;; (write-line "RETURNING SAME ENV")
-            env
-        )
+        (T env)
     )
 )
 
 (defun playMove (env)
-    "Allows player to choose a move to play and returns a new environment."
+    ;; Allows player to choose a move to play and returns a new environment."
     ;; "@param {environment} env: environment"
-    (write-line "")
-    (write-line "Enter source row (A B C ...) or S to skip:")
-    (let* ((sRow (cadr (assoc (read ) *numberByLetter*))))
-        (cond 
-            ((= sRow -1) env)
-            (T 
-                (write-line "Enter source column (1 2 3...):")
-                (let ((sColumn (read )))
-                    (write-line "Enter destination row (A B C ...):")
-                    (let ((dRow (cadr (assoc (read ) *numberByLetter*))))
-                        (write-line "Enter destination column (1 2 3...):")
-                        (let ((dColumn (read )))
-                            (write-line "Enter source level:")
-                            (let* (
-                            (level (read ))
-                            (stackOwner (nth level (getStack sRow sColumn (environment-state env))))
-                            )
-                                (cond 
-                                    ((equal stackOwner (environment-checker env)) 
-                                        (moveStack (list sRow sColumn) (list dRow dColumn) level env T)
+    (cond 
+        ((> (length (generatePossibleOutcomes env)) 0)
+            (write-line "")
+            (write-line "Enter source row (A B C ...)")
+            (let* ((sRow (cadr (assoc (read ) *numberByLetter*))))
+                (cond 
+                    ((= sRow -1) env)
+                    (T 
+                        (write-line "Enter source column (1 2 3 ...):")
+                        (let ((sColumn (read )))
+                            (write-line "Enter destination row (A B C ...):")
+                            (let ((dRow (cadr (assoc (read ) *numberByLetter*))))
+                                (write-line "Enter destination column (1 2 3 ...):")
+                                (let ((dColumn (read )))
+                                    (write-line "Enter source level (0 1 2 ...):")
+                                    (let* (
+                                    (level (read ))
+                                    (stackOwner (nth level (getStack sRow sColumn (environment-state env))))
                                     )
-                                    (T
-                                        (write-line "")
-                                        (write-line "") 
-                                        (write-line "You are not stack owner!")
-                                        (playMove env)
+                                        (cond 
+                                            ((equal stackOwner (environment-checker env)) 
+                                                (moveStack (list sRow sColumn) (list dRow dColumn) level env T)
+                                            )
+                                            (T
+                                                (write-line "")
+                                                (write-line "") 
+                                                (write-line "You are not stack owner!")
+                                                (playMove env)
+                                            )
+                                            
+                                        )
                                     )
-                                    
                                 )
                             )
                         )
@@ -489,18 +467,24 @@
                 )
             )
         )
+        (T
+            (write (environment-checker env))
+            (write-string " doesn't have valid moves. Skipping.")
+            (write-line "")
+            (setf (environment-checker env) (toggle (environment-checker env)))
+        )
     )
+    
 )
 
 (defun isQuasiTerminal (node)
-    "Checks if node is quasi terminal (no children)."
+    ;; Checks if node is quasi terminal (no children)."
     ;; "@param {node} node: node"
     (null (node-children node))
 )
 
 (defun generateMovesByLevel (rcPair level env)
-    ;; (write-line "LEVEL:")
-    ;; (write level)
+    ;; Generates all valid moves on given level for one stack for all adjacent squares
     (let* (
     (row (car rcPair))
     (column (cadr rcPair))
@@ -515,28 +499,14 @@
         (if (not (equal move3 env)) (setq ret (cons move3 ret)))
         (if (not (equal move4 env)) (setq ret (cons move4 ret)))
 
-        ;; (printBoard (environment-state move1) T 8)
-        ;; ;; (write move1)
-        ;; (write-line "")
-        ;; (write-line "")
-        ;; (printBoard (environment-state move2) T 8)
-        ;; ;; (write move2)
-        ;; (write-line "")
-        ;; (write-line "")
-        ;; (printBoard (environment-state move3) T 8)
-        ;; ;; (write move3)
-        ;; (write-line "")
-        ;; (write-line "")
-        ;; (printBoard (environment-state move4) T 8)
-        ;; (write move4)
-
         ret
     )  
 )
 
 (defun generateMoves (position env)
+    ;; Calls generateMovesByLevel for a given position
     (cond 
-        ((null (cdr position)) '())
+        ((or (null (cdr position)) (null (caadr position))) '())
         (T
             (append (generateMovesByLevel (car position) (caadr position) env) (generateMoves (cons (car position) (cddr position)) env))
         )
@@ -544,52 +514,31 @@
 )
 
 (defun generateAllMoves (positions env)
+    ;; Calls generateMoves for all given positions
     (cond 
         ((null positions) '())
         (T
              (append (generateMoves (car positions) env) (generateAllMoves (cdr positions) env))
-            ;; (list (generateMoves (car positions) env))
+             ;; (generateMoves (car positions) env)
         )
     )
 )
 
 (defun generatePossibleOutcomes (env)
-    "Generates possible outcomes (next states) by given environment"
+    ;; Generates possible outcomes (next states) by given environment"
 
     (let* (
     (checker (environment-checker env))
     (positions (if (equal checker 'X) (environment-xPositions env) (environment-oPositions env)))
     (outcomes (generateAllMoves positions env))
     )
-        ;; (write-line "AAAAAAAAAAA")
-        ;; (write outcomes)
-        ;; (write-line "AAAAAAAAAAA")
         (setq DEV-nodeCount (+ DEV-nodeCount (length outcomes)))
         outcomes
     )
-
-    ;; (cond 
-    ;;     ((= (environment-checker env) 'X)
-    ;;         (let ((outcomes (list 
-    ;;             (moveStack (list 3 1) (list 3 3) 1 env '()) 
-    ;;             (moveStack (list 7 3) (list 6 4) 1 env '()) 
-                
-    ;;             ;; 35
-    ;;         )))
-    ;;             (setq DEV-nodeCount (+ DEV-nodeCount (length outcomes)))
-    ;;             outcomes
-    ;;         )
-            
-            
-    ;;     )
-    ;;     ((= player 1)
-    ;;         (list (moveStack (list 2 8) (list 3 7) 1 env) (moveStack (list 2 6) (list 3 5) 1 env))
-    ;;     )
-    ;; )
 )
 
 (defun outcomesToNodes (list)
-    "Maps outcomes (list of states) to list of Nodes."
+    ;; Maps outcomes (list of states) to list of Nodes."
     (cond 
         ((null list) ())
         (T (cons (make-node :environment (car list)) (outcomesToNodes (cdr list))))
@@ -597,7 +546,7 @@
 )
 
 (defun deepen (list n)
-    "Generates children of last (quasi-terminal) nodes."
+    ;; Generates children of last (quasi-terminal) nodes."
     (cond 
         ((or (null list) (= n 0)) ())
         ((listp list)
@@ -622,7 +571,7 @@
 )
 
 (defun printPretty (node indent last)
-    "Prints pretty tree starting from given node."
+    ;; Prints pretty tree starting from given node."
     (write-line "")
     (write-string indent)
     (cond 
@@ -643,7 +592,7 @@
 )
 
 (defun printStackWinners (stackWinners)
-    "Prints list of stack winners."
+    ;; Prints list of stack winners."
     ;; "@param {(X O X)} stackWinners: list of checkers"
     (cond 
         ((not (null stackWinners))
@@ -658,7 +607,7 @@
 )
 
 (defun checkWinner (stackWinners half)
-    "Checks and returns winner if there is enough stack winners to end the game."
+    ;; Checks and returns winner if there is enough stack winners to end the game."
     ;; "@param {(X O X)} stackWinners: list of checkers"
     ;; "@param {float} half: needed amount for win"
     (cond 
@@ -669,7 +618,7 @@
 )
 
 (defun frequency (el list)
-    "Returns count of occurence frequency of element in list. Not nested."
+    ;; Returns count of occurence frequency of element in list. Not nested."
     ;; "@param {any} el: search element"
     ;; "@param {( any )} list: list"
     (cond 
@@ -680,16 +629,16 @@
 )
 
 (defun toggle (checker)
-    "Returns other checker based on input."
+    ;; Returns other checker based on input."
     ;; "@param {X or O} checker: element to toggle"
     (cond 
         ((equal checker 'X) 'O)
-        (checker 'X)
+        (T 'X)
     )
 )
 
 (defun main ()
-    "Main function."
+    ;; Main function."
     (write-line "")
     (write-line "Enter field size (8 or 10, default 8):")
     (let* (
@@ -710,7 +659,7 @@
         )
             (printBoard (environment-state env) T n)
 
-            (write-string "1: print board, 2: write state, 3: play a move, -1: exit")
+            (write-string "1: print board, 2: write state, 3: play a move, 4: generate possible outcomes -1: exit")
             (write-line "")
             (let ((action (read )))
                 (loop while (not (<= action -1)) do
@@ -756,11 +705,26 @@
                                         (exit )
                                     )
                                 )
-                            )
-                            
-                            (setf (environment-checker env) (toggle (environment-checker env)))              
+                            )              
                         )
                         ((= action 4)
+                            (write-line "Would you like to print possible outcomes? (0: no, 1: yes)")
+                            (let ((outcomes (generatePossibleOutcomes env)) (print (read )))
+                                (if (= print 1)
+                                    (loop for oc in outcomes do
+                                        (write-line "")
+                                        (write-line "")
+                                        (write-line "")
+                                        (printBoard (environment-state oc) T n)
+                                    )
+                                )
+                                
+                                (write-line "Number of possible outcomes: ")
+                                (write (length outcomes))
+                            )
+                            
+                        )
+                        ((= action 5)
                             (write-line "Depth:")
                             (let ((num (read )))
                                 (time 
@@ -771,14 +735,6 @@
                                 ;; (printPretty root "" '())
                                 ;; (room )
                             )
-                        )
-                        ((= action 5)
-                            (write (length (generatePossibleOutcomes env)))
-                        )
-                        ((= action 6)
-                            (setq test '(X O X O X))
-                            (write (getLevels test 'X))
-                            (write (getLevels test 'O))
                         )
                         (T 
                             (write-line "Please choose correct action.")

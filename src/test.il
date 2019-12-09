@@ -73,6 +73,12 @@ defun(deepen (nodelist)
     )
 )
 
+defun(reduceLevels (levels to)
+    let(((first -(car(levels) to)))
+        mapcar(#'lambda((x) -(x first)) levels)
+    )
+)
+
 print(state)
 setq(root generateChild(state 1 2))
 // setf(node-children(root) generateChildren(state 1 1))

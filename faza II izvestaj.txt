@@ -1,0 +1,60 @@
+Faza I
+
+Definisane su konstante za pomoc pri generisanju i stampanju table.
+To su: *numberByLetter*, *letterByNumber*
+
+Definisana je struktura "environment" koja u sebi sadrži "state", "stackWinners" i "checker".
+"state" predstavlja memorijsku reprezentaciju table sa checkerima.
+"stackWinners" predstavlja listu dobijenih stackova. Pamte se samo gornji checkeri, ne ceo dobijen stack. default: '()
+"checker" predstavlja onaj checker koji je po redu za igranje poteza. default: 'X
+Ukoliko se struktura "environment" prosiri, dodaci ce biti ispisani ovde.
+
+Funkcije "generatePlayingField", "generateRow" i "generateStacks" se koriste za generisanje memorijske reprezentacije table.
+Ove funkcije generisu asocijativnu listu asocijativnih listi, gde ključevi predstvljaju red i kolonu.
+
+"print***" funkcije sluze za ispisivanje i iscrtavanje state-a na konzoli.
+Glavna print funkcija je "printBoard", koja poziva ostale.
+
+Funkcija "main" se poziva na samom pocetku. 
+Dozvoljava unos velicine table (default: 8), da li i koji po redu igra racunar (AI).
+Glavni deo tela funkcije se vrti loop-om i dozvoljava odabir akcije.
+Akcije:
+1: print board (iscrtava tablu na konzoli)
+2: write state (ispisuje memorijsku reprezentaciju table)
+3: play a move (dozvoljava korisniku/racunaru da odigra potez)
+-1: exit (izlaz iz loop-a, a samim tim i iz programa)
+
+Funckija "playMove" dozvoljava korisniku/racunaru da odigra potez.
+Potez se bira unosom 2 koordinate (row, a zatim column) i nivoa sa kog se uzimaju delovi, odnosno ceo stack.
+Ukoliko je na odabranom nivou odgovarajući (igračev) checker, poziva se funkcija "moveStack".
+
+Funkcija "moveStack" proverava (pozivom funkcije "checkValid") validnost poteza, i ukoliko je validan, deli,
+odnosno prebacuje ceo stack na odgovarajuće polje na tabli.
+
+Funckija "checkValid" proverava da li je pomeraj stacka za jedan dijagonalno i da li je potez ka najbližem stack-u.
+
+
+
+Akcije koje dozvoljavaju testiranje faze I su 1, 2 i 3.
+Ostale akcije su u izradi, za neku od narednih faza.
+Funkcije i promenljive koje se ne pozivaju akcijama 1, 2 i 3 mogu biti neispravne.
+
+Sve funkcije su opisane stringom u prvoj linije tela funkcije.
+Svi parametri funkcija su opisani komentarom ispod prve linije tela funkcije.
+Opis je na engleskom.
+
+------------------------------------------------------------------------------------
+
+Faza II
+
+Kao što je definisano u prvoj fazi, operatorska funkcija za promenu stanja je "moveStack".
+Do nje se može doći (vizuelno) preko akcije 3 (playMove).
+Preko nje se može testirati validnost i uspešnost pomeranja stack-a na dato polje na tabli.
+Akcija 3 takođe obezbeđuje odigravanje partije između dva igrača.
+Uspešno odrađena funkcija "playMove" menja igrača koji je na redu za potez.
+
+Funkcija "generatePossibleOutcomes" služi za formiranje svih mogućih situacija na tabli.
+Za njenu izradu iskorišćene su funkcije:
+"generateAllMoves", "generateMoves", "generateMovesByLevel" i prethodno pomenuta funkcija "moveStack", koja 
+vraća novu situaciju na tabli uz proveru validnosti generisanog poteza.
+Ovu funkciju možete testirati preko akcije 4.
