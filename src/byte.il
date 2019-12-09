@@ -2,7 +2,7 @@ defconstant(*numberByLetter* '((A 1) (B 2) (C 3) (D 4) (E 5) (F 6) (G 7) (H 8) (
 defconstant(*letterByNumber* '((1 A) (2 B) (3 C) (4 D) (5 E) (6 F) (7 G) (8 H) (9 I) (10 J)))
 
 defstruct(node environment (value 'HV) (children '()))
-defstruct(environment state (stackWinners '()) (checker 'X) (xPositions '()) (oPositions '()) (heights '()))
+defstruct(environment state (stackWinners '()) (checker 'X) (xPositions '()) (oPositions '()))
 
 defvar(DEV-nodeCount 1) // help variable for development
 
@@ -14,17 +14,11 @@ defun(initializeAllPositions (nonEmpty env)
                 initializePosition('O car(nonEmpty) '(0) env)
                 initializePosition('X car(nonEmpty) '(0) env)
             )
-            initializeHeight(car(nonEmpty) 1 env)
             initializeAllPositions(cdr(nonEmpty) env)
         )
     )
 )
 
-defun(initializeHeight (rcPair height env)
-    let(((heights environment-heights(env)))
-        setf(environment-heights(env) append(heights list(list(rcPair height))))
-    )
-)
 
 defun(initializePosition (checker rcPair levels env)
     let(((positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env))))
@@ -39,29 +33,54 @@ defun(initializePosition (checker rcPair levels env)
     )
 )
 
-defun(addPosition (checker rcPair levels env)
+defun(setPosition (checker rcPair levels env)
     let*(((positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env))) (pos assoc(rcPair positions :test #'equal)))
         cond(
             (null(pos) 
                 initializePosition(checker rcPair levels env)
             )
             (T
-                setf(cdr(pos) list(append(cadr(pos) levels)))
+                setf(cdr(pos) list(levels))
             )
         )
     )
 )
 
-defun(removePosition (checker rcPair level env)
+// defun(removePosition (checker rcPair level env)
+//     let*((
+//     (positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)))
+//     (pos assoc(rcPair positions :test #'equal))
+//     (new remove(level cadr(pos) :test #'<=))
+//     )
+//         cond(
+//             (null(new) setf(if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)) remove(pos positions)))
+//             (T
+//                 setf(cdr(pos) list(new))
+//             )
+//         )
+//     )
+// )
+
+defun(removePosition (checker rcPair env)
     let*((
     (positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)))
     (pos assoc(rcPair positions :test #'equal))
-    (new remove(level cadr(pos) :test #'<=))
     )
-        cond(
-            (null(new) setf(if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)) remove(pos positions)))
-            (T
-                setf(cdr(pos) list(new))
+        setf(if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)) remove(pos positions))
+    )
+)
+
+defun(getLevels (stack checker)
+    indexes(copy-tree(stack) checker)
+)
+
+defun(indexes (list e)
+    cond(
+        (=(frequency(e list) 0) '())
+        (T
+            let*(((pos position(e list)))
+                setf(nth(pos list) 'Y)
+                cons(pos indexes(list e))
             )
         )
     )
@@ -347,6 +366,8 @@ defun(moveStack (source destination level env forceMove)
             (newEnv copy-environment(env))
             (newState copy-tree(environment-state(newEnv)))
             (newStackWinners copy-tree(environment-stackWinners(newEnv)))
+            // (newXPositions copy-tree(environment-xPositions(newEnv)))
+            // (newOPositions copy-tree(environment-oPositions(newEnv)))
             (sRow car(source))
             (sCol car(last(source)))
             (dRow car(destination))
@@ -359,35 +380,62 @@ defun(moveStack (source destination level env forceMove)
                 // print(sSrc)
                 // print(sDest)
                 setf(cadr(getSquare(sRow sCol newState)) sSrc)
-                cond(
-                    (=(length(sDest) 8)
-                        setf(cadr(getSquare(dRow dCol newState)) '())
-                        setq(newStackWinners append(last(sDest) newStackWinners)) 
 
-                        setf(environment-state(newEnv) newState)
-                        setf(environment-stackWinners(newEnv) newStackWinners)
-                        newEnv
-                    )
-                    (>(length(sDest) 8)
-                        cond(
-                            (forceMove
-                                write-line("")
-                                write-line("") 
-                                write-line("Invalid move. You cannot make stack larger than 8.") 
-                                playMove(env)
+                let((
+                (sXLevels getLevels(sSrc 'X))
+                (sOLevels getLevels(sSrc 'O))
+                (dXLevels getLevels(sDest 'X))
+                (dOLevels getLevels(sDest 'O))
+                )
+                    cond(
+                        (>(length(sDest) 8)
+                            cond(
+                                (forceMove
+                                    write-line("")
+                                    write-line("") 
+                                    write-line("Invalid move. You cannot make stack larger than 8.") 
+                                    playMove(env)
+                                )
+                                (T env)
                             )
-                            (T env)
                         )
-                    )
-                    (T
-                        setf(cadr(getSquare(dRow dCol newState)) sDest)
+                        (=(length(sDest) 8)
+                            setf(cadr(getSquare(dRow dCol newState)) '())
+                            setq(newStackWinners append(last(sDest) newStackWinners)) 
 
-                        setf(environment-state(newEnv) newState)
-                        setf(environment-stackWinners(newEnv) newStackWinners)
-                        newEnv
-                    )
-                )        
-                
+                            
+
+                            setf(environment-state(newEnv) newState)
+                            setf(environment-stackWinners(newEnv) newStackWinners)
+                            setf(environment-xPositions(newEnv) copy-tree(environment-xPositions(newEnv)))
+                            setf(environment-oPositions(newEnv) copy-tree(environment-oPositions(newEnv)))
+
+                            setPosition('X source sXLevels newEnv)
+                            setPosition('O source sOLevels newEnv)
+
+                            removePosition('X destination newEnv)
+                            removePosition('O destination newEnv)
+
+                            newEnv
+                        )
+                        (T
+                            setf(cadr(getSquare(dRow dCol newState)) sDest)
+
+                            setf(environment-state(newEnv) newState)
+                            setf(environment-stackWinners(newEnv) newStackWinners)
+                            setf(environment-xPositions(newEnv) copy-tree(environment-xPositions(newEnv)))
+                            setf(environment-oPositions(newEnv) copy-tree(environment-oPositions(newEnv)))
+
+                            if(null(sXLevels) removePosition('X source newEnv) setPosition('X source sXLevels newEnv))
+                            if(null(sOLevels) removePosition('O source newEnv) setPosition('O source sOLevels newEnv))
+
+                            setPosition('X destination dXLevels newEnv)
+                            setPosition('O destination dOLevels newEnv)
+
+                            newEnv
+                        )
+                    )        
+                )
             )
         )
         (forceMove
@@ -397,7 +445,7 @@ defun(moveStack (source destination level env forceMove)
             playMove(env)
         )
         (T 
-            write-line("RETURNING SAME ENV")
+            // write-line("RETURNING SAME ENV")
             env
         )
     )
@@ -460,23 +508,28 @@ defun(generateMovesByLevel (rcPair level env)
     (move2 moveStack(rcPair list(+(row 1) -(column 1)) level env '()))
     (move3 moveStack(rcPair list(-(row 1) -(column 1)) level env '()))
     (move4 moveStack(rcPair list(-(row 1) +(column 1)) level env '()))
-    (ret list(
-            if(equal(move1 env) '() move1)
-            if(equal(move2 env) '() move2)
-            if(equal(move3 env) '() move3)
-            if(equal(move4 env) '() move4)
-        ))
+    (ret '())
     )
-        printBoard(environment-state(move1) T 8)
-        write-line("")
-        write-line("")
-        printBoard(environment-state(move2) T 8)
-        write-line("")
-        write-line("")
-        printBoard(environment-state(move3) T 8)
-        write-line("")
-        write-line("")
-        printBoard(environment-state(move4) T 8)
+        if(not(equal(move1 env)) setq(ret cons(move1 ret)))
+        if(not(equal(move2 env)) setq(ret cons(move2 ret)))
+        if(not(equal(move3 env)) setq(ret cons(move3 ret)))
+        if(not(equal(move4 env)) setq(ret cons(move4 ret)))
+
+        // printBoard(environment-state(move1) T 8)
+        // // write(move1)
+        // write-line("")
+        // write-line("")
+        // printBoard(environment-state(move2) T 8)
+        // // write(move2)
+        // write-line("")
+        // write-line("")
+        // printBoard(environment-state(move3) T 8)
+        // // write(move3)
+        // write-line("")
+        // write-line("")
+        // printBoard(environment-state(move4) T 8)
+        // write(move4)
+
         ret
     )  
 )
@@ -485,7 +538,7 @@ defun(generateMoves (position env)
     cond(
         (null(cdr(position)) '())
         (T
-            cons(generateMovesByLevel(car(position) caadr(position) env) generateMoves(cons(car(position) cddr(position)) env))
+            append(generateMovesByLevel(car(position) caadr(position) env) generateMoves(cons(car(position) cddr(position)) env))
         )
     )
 )
@@ -494,7 +547,7 @@ defun(generateAllMoves (positions env)
     cond(
         (null(positions) '())
         (T
-            cons(generateMoves(car(positions) env) generateAllMoves(cdr(positions) env))
+             append(generateMoves(car(positions) env) generateAllMoves(cdr(positions) env))
             // list(generateMoves(car(positions) env))
         )
     )
@@ -506,8 +559,13 @@ defun(generatePossibleOutcomes (env)
     let*((
     (checker environment-checker(env))
     (positions if(equal(checker 'X) environment-xPositions(env) environment-oPositions(env)))
+    (outcomes generateAllMoves(positions env))
     )
-        generateAllMoves(positions env)
+        // write-line("AAAAAAAAAAA")
+        // write(outcomes)
+        // write-line("AAAAAAAAAAA")
+        setq(DEV-nodeCount +(DEV-nodeCount length(outcomes)))
+        outcomes
     )
 
     // cond(
@@ -552,7 +610,7 @@ defun(deepen (list n)
                     cond(
                         (=(n 0) list)
                         // (T deepen(node-children(list) -(n 1)))
-                        (T deepen(outcomesToNodes(generatePossibleOutcomes(node-environment(list) 0)) -(n 1)))
+                        (T deepen(outcomesToNodes(generatePossibleOutcomes(node-environment(list))) -(n 1)))
                     )
                 )
                 (T
@@ -715,7 +773,12 @@ defun(main ()
                             )
                         )
                         (=(action 5)
-                            generatePossibleOutcomes(env)
+                            write(length(generatePossibleOutcomes(env)))
+                        )
+                        (=(action 6)
+                            setq(test '(X O X O X))
+                            write(getLevels(test 'X))
+                            write(getLevels(test 'O))
                         )
                         (T 
                             write-line("Please choose correct action.")
