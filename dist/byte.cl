@@ -541,7 +541,7 @@
     ;; Maps outcomes (list of states) to list of Nodes."
     (cond 
         ((null list) ())
-        (T (cons (make-node :environment (car list)) (outcomesToNodes (cdr list))))
+        (T (cons (make-node :environment (car list) :value (random 1000) )  (outcomesToNodes (cdr list))))
     )
 )
 
@@ -555,11 +555,11 @@
         ((node-p list)
             (cond 
                 ((isQuasiTerminal list)
-                    ;; (setf (node-children list) (outcomesToNodes (generatePossibleOutcomes (node-state list) 0)))
+                    (setf (node-children list) (outcomesToNodes (generatePossibleOutcomes (node-environment list))))
                     (cond 
                         ((= n 0) list)
-                        ;; (T (deepen (node-children list) (- n 1)))
-                        (T (deepen (outcomesToNodes (generatePossibleOutcomes (node-environment list))) (- n 1)))
+                        (T (deepen (node-children list) (- n 1)))
+                        ;; (T (deepen (outcomesToNodes (generatePossibleOutcomes (node-environment list))) (- n 1)))
                     )
                 )
                 (T
@@ -568,6 +568,7 @@
             )
         )
     )
+    list
 )
 
 (defun printPretty (node indent last)
@@ -634,6 +635,40 @@
     (cond 
         ((equal checker 'X) 'O)
         (T 'X)
+    )
+)
+
+(defun isTerminal (node)
+    (isQuasiTerminal node)
+)
+
+
+(defun alphabeta (node depth A B player)
+    (cond 
+        ((or (= depth 0) (isTerminal node)) 
+            (node-value node)
+        )
+    )
+    (if (equal player 'X)
+        
+        (let ((value -999999))
+            (dolist (child (node-children node))
+                (print (node-value child))
+                (setf value (max value (alphabeta child (- depth 1) A B 'O)))
+                (setf A (max A value))
+                (if (<= B A) (return ))
+            )
+            value
+        )
+        (let ((value +999999))
+            (dolist (child (node-children node))
+                (print (node-value child))
+                (setf value (min value (alphabeta child (- depth 1) A B 'X)))
+                (setf A (min A value))
+                (if (<= B A) (return ))
+            )
+            value
+        )
     )
 )
 
@@ -729,12 +764,14 @@
                             (write-line "Depth:")
                             (let ((num (read )))
                                 (time 
-                                    (deepen (list (make-node :environment env :value 'HV :children '())) num)
+                                    (let ((a (deepen (list (make-node :environment env :value 'HV :children '())) num)))
+                                        (print DEV-nodeCount)
+                                        (setq DEV-nodeCount 1)
+                                        (print (alphabeta (first a) 3 -999999 +999999 'X))
+                                        ;; (printPretty (first a) "" '())
+                                    )
                                 )
-                                (print DEV-nodeCount)
-                                (setq DEV-nodeCount 1)
-                                ;; (printPretty root "" '())
-                                ;; (room )
+                                
                             )
                         )
                         (T 
