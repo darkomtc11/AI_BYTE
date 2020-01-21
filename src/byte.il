@@ -721,6 +721,7 @@ defun(main ()
                                 
                                 write-line("Number of possible outcomes: ")
                                 write(length(outcomes))
+                                setq(DEV-nodeCount 1)
                             )
                             
                         )
